@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}登録 - {% endblock %}
+
+{% block body %}
+<form action="{{ url_for('login.register') }}" name="loginform" method="POST">
+	<div class="form-group">
+		<label for="username">ユーザ名:</label>
+		<input type="text" id="InputUsername" name=username class="form-control">
+		{% if username_msg == "" %}
+		{% else %}<div class="alert alert-danger">{{ username_msg }}</div>{% endif %}
+	</div>
+	<div class="form-group">
+		<label for="email">メールアドレス:</label>
+		<input type="email" id="InputAddress" name=email class="form-control">
+		{% if email_msg == "" %}
+		{% else %}<div class="alert alert-danger">{{ email_msg }}</div>{% endif %}
+	</div>
+	<div class="form-group">
+		<label for="username">パスワード:</label>
+		<input type="password" id="InputPassword" name=password class="form-control">
+		{% if password_msg == "" %}
+		{% else %}<div class="alert alert-danger">{{ password_msg }}</div>{% endif %}
+	</div>
+	<button type="submit" class="btn btn-primary">新規登録</button>
+</form>
+{% endblock %}

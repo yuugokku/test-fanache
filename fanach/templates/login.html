@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}ログイン - {% endblock %}
+
+{%block body %}
+<br><h3>ログイン</h3><br>
+<div class="mb-3">
+    <form action="{{ url_for('login.login_form') }}" name="loginform" method="POST">
+	    <div class="form-group">
+		    <label for="username">ユーザ名:</label>
+    		<input type="text" id="InputUsername" name=username class="form-control">
+    	</div>
+    	<div class="form-group">
+    		<label for="username">パスワード:</label>
+    		<input type="password" id="InputPassword" name=password class="form-control">
+    	</div>
+    	{% if error_msg == "" %}
+		{% else %}<div class="alert alert-danger">{{ error_msg }}</div>{% endif %}
+    	<button type="submit" class="btn btn-primary">ログイン</button>
+    </form>
+</div>
+<a href="{{ url_for('login.register') }}">新規登録</a><br>
+{% endblock %}

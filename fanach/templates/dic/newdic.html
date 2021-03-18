@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}新しい辞書 - {% endblock %}
+
+{% block body %}
+<br><h3>辞書を作成する</h3><br>
+<div class="container-fluid mb-3">
+	<form action="{{ url_for('dic.new_dic') }}" method="POST" name="newdicform">
+		<label for="dictname">辞書の名前:</label>
+		<input type="text" id="InputDicName" name=dicname class="form-control">
+		{% if username_msg == "" %}
+		{% else %}<div class="alert alert-danger">{{ username_msg }}</div>{% endif %}
+				
+	</form>
+</div>
+{% endblock %}
