@@ -31,16 +31,16 @@ def login_form():
 			error_msg = "パスワードが異なります"
 		else:
 			session["logged_in"] = True
-			session["username"] = user.username
-			return redirect(url_for("dic.show_items"))
+			session["current_user"] = user.user_id
+			return redirect(url_for("dic.show_all_dics"))
 	return render_template("login.html", error_msg=error_msg)
 
 # /login/no-out ログアウト処理
 @login.route("/no-out")
 def logout():
 	session["logged_in"] = False
-	session["username"] = ""
-	return redirect(url_for("dic.show_items"))
+	session["current_user"] = None
+	return redirect(url_for("dic.show_all_dics"))
 
 # /login/register ユーザ登録
 @login.route("/register", methods=["GET", "POST"])
@@ -60,7 +60,10 @@ def register():
 			# ユーザ名長すぎ
 			is_valid = False
 			username_msg = "ユーザ名が長すぎます。ユーザ名は50文字以内である必要があります。"
-
+		elif len(username) < 1:
+			# ユーザ名が1文字未満
+			is_valid = False
+			username_msg = "ユーザ名は1文字以上である必要があります。"
 		userlist = User.query.all()
 		for usr in userlist:
 			if username == usr.username:
@@ -83,7 +86,6 @@ def register():
 		match = re.match(pat, email)
 		if match is None:
 			is_valid = False
-			print("メールの書式がおかしい")
 			email_msg = "メールアドレスの書式ではありません。"
 
 		if is_valid:
@@ -97,9 +99,11 @@ def register():
 			print("新しいユーザ:", username)
 			db.session.add(user)
 			db.session.commit()
+			last_user = User.query.order_by(User.user_id.desc()).first()
+			user_id = last_user.user_id
 			session["logged_in"] = True
-			session["username"] = username
-			return redirect(url_for("dic.show_items"))
+			session["current_user"] = user_id
+			return redirect(url_for("dic.show_all_dics"))
 		else:
 			return render_template(
 				                    "register.html", 
@@ -113,4 +117,4 @@ def register():
 
 @login.app_errorhandler(404)
 def non_existant_route(error):
-	return redirect(url_for("login.login_form"))
+	return redirect(url_for("dic.show_all_dics"))

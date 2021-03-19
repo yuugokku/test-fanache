@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{% block title %}{{dictionary.dicname}} - {% endblock %}
+
+{% block body %}
+<br><h3 class="text-center">{{dictionary.dicname | safe}}</h3><br>
+<p>{{dictionary.description | safe}}</p>
+{% endblock %}

@@ -17,7 +17,7 @@ class Word(db.Model):
 	editor = db.Column(db.Integer)
 
 	def __init__(self, dic_id, word, trans, ex, editor, **kwargs):
-		super(self, Word).__init__(**kwargs)
+		super(Word, self).__init__(**kwargs)
 		self.dic_id = dic_id
 		self.word = word
 		self.trans = trans

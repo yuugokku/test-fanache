@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}{% endblock %}
+
+{% block body %}
+<br><h3>Fanache je Fanachekitta<br>
+	<small class="text-muted">Fanacheではkphtの人工言語の辞書を検索できます。</small></h3><br>
+{% for d in dictionaries %}
+<div class="container border-primary rounded">
+<h5><a class="text-" href="{{ url_for('dic.show_dic', dic_id=d.dic_id) }}">{{d.dicname}}</a></h5>
+<p>{{d.description}}</p>
+</div>
+{% else %}
+辞書が存在しません。追加されるのを待ちましょう。
+{% endfor %}
+{% endblock %}
