@@ -1,14 +1,20 @@
 # Configurations of the app
 
 import json
+import os
 with open("fanach/admin_config.json") as f:
 	admin_config = json.load(f)
 
-DEBUG = True
+mode = "dev"
 
-# SQLite
-SQLALCHEMY_DATABASE_URI = "sqlite:///fanachekittatue.db"
-SQLALCHEMY_TRACK_MODIFICATIONS = True
+if mode == "dev":
+	DEBUG = True
+	SQLALCHEMY_DATABASE_URI = "sqlite:///fanachekittatue.db"
+	SQLALCHEMY_TRACK_MODIFICATIONS = True
+elif mode == "prod":
+	DEBUG = False
+	SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+	SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 # Session
 SECRET_KEY = " HqiW=WKJS5RZYfKkE0em=iB@c3G68hyyI0Il9kD2HqiW=WKJS5RZYfKkE0em=iB@c3G68hyyI0Il9kD2"
