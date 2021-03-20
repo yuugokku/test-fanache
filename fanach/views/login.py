@@ -32,6 +32,7 @@ def login_form():
 		else:
 			session["logged_in"] = True
 			session["current_user"] = user.user_id
+			session["screenname"] = user.screenname
 			return redirect(url_for("dic.show_all_dics"))
 	return render_template("login.html", error_msg=error_msg)
 
@@ -40,6 +41,7 @@ def login_form():
 def logout():
 	session["logged_in"] = False
 	session["current_user"] = None
+	session["screenname"] = "ゲスト"
 	return redirect(url_for("dic.show_all_dics"))
 
 # /login/register ユーザ登録
@@ -103,6 +105,7 @@ def register():
 			user_id = last_user.user_id
 			session["logged_in"] = True
 			session["current_user"] = user_id
+			session["screenname"] = user.screenname
 			return redirect(url_for("dic.show_all_dics"))
 		else:
 			return render_template(

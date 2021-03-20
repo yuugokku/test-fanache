@@ -3,7 +3,7 @@
 {% block title %}{{dicname}} - {% endblock %}
 
 {% block body %}
-<br><h3 class="text-center">{{dicname | safe}}</h3><br>
+<br><h3 class="text-center"><a href="{{url_for('dic.show_dic', dic_id=session['current_dic'])}}">{{dicname | safe}}</a></h3><br>
 {% if words.__len__() > 0 %}
 <div class="alert alert-primary">{{words.__len__()}}件見つかりました。</div>
 {% endif %}
@@ -11,7 +11,6 @@
 <div class="border rounded">
 <h5 class="ml-2 my-2">{{word.word}}</h5>
 <a href="{{url_for('dic.edit_word', dic_id=session['current_dic'], word_id=word.word_id)}}" class="ml-1"><button class="btn btn-secondary btn-sm">編集</button></a>
-<a href="{{url_for('dic.edit_word', dic_id=session['current_dic'], word_id=word.word_id)}}"><button class="btn btn-danger btn-sm">削除</button></a>
 <div class="container-fluid">
 <p class="my-2">{{word.trans}}</p>
 <p>{{word.ex}}</p>

@@ -1,2 +1,4 @@
-Pipfile
-Pipfile.lock
+manage.py
+fanach/scripts/*.py
+fanach/__pycache__/*
+

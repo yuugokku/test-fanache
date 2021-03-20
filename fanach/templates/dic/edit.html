@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}{{dictionary.dicname}}の編集 - {% endblock %}
+
+{% block body %}
+<br><h3>辞書を編集する</h3><br>
+<div class="container-fluid mb-3">
+	<form action="{{ url_for('dic.edit_dic', dic_id=dictionary.dic_id) }}" method="POST" name="editdicform">
+		<label for="dicname">辞書の名前:</label>
+		<input type="text" id="InputDicName" name=dicname class="form-control" value="{{dictionary.dicname}}">
+		{% if dicname_msg == "" %}
+		{% else %}<div class="alert alert-danger">{{ dicname_msg }}</div>{% endif %}
+		<br>
+		<label for="description">辞書の説明</label>
+		<textarea id="InputDescription" name=description class="form-control" rows="3">{{dictionary.description}}</textarea>
+		<br>
+		<input type="submit" id="Submit" name=submitbutton class="btn btn-primary mr-auto" value="更新">
+		<br><br><a class="text-danger" href="{{url_for('dic.delete_dic_prompt', dic_id=dictionary.dic_id)}}">辞書を削除</a>
+	</form>
+
+</div>
+{% endblock %}

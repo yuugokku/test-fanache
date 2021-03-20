@@ -3,6 +3,15 @@
 {% block title %}{{dictionary.dicname}} - {% endblock %}
 
 {% block body %}
-<br><h3 class="text-center">{{dictionary.dicname | safe}}</h3><br>
-<p>{{dictionary.description | safe}}</p>
+<br><h3 class="text-center"><a href="{{url_for('dic.show_dic', dic_id=dictionary.dic_id)}}">{{dictionary.dicname | safe}}</a></h3><br>
+<div class="alert alert-info text-center">
+	作成者: {{owner}}<br>
+	収録語数: {{wordcount}}
+</div>
+<p>{{dictionary.description | safe}}</p><br>
+<form action="{{url_for('dic.edit_dic', dic_id=dictionary.dic_id)}}">
+	{% if session["current_user"] == dictionary.owner %}
+	<input type="submit" class="btn btn-secondary btn-sm" value="編集">
+	{% endif %}
+</form>
 {% endblock %}

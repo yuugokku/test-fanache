@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}{{word.word}}の編集 - {% endblock %}
+
+{% block body %}
+<br><h3>単語を編集する</h3><br>
+<div class="container-fluid mb-3">
+	<form action="{{ url_for('dic.edit_word', dic_id=session['current_dic'], word_id=word.word_id) }}" method="POST" name="newdicform" enctype="multipart/form-data">
+		<label for="word">単語名:</label>
+		<input type="text" id="InputWord" name=word class="form-control" value="{{word.word}}">
+		{% if word_msg == "" %}
+		{% else %}<div class="alert alert-warning">{{ word_msg }}</div>{% endif %}
+		<br>
+		<label for="translation">訳語</label>
+		<textarea id="InputTranslation" name=trans class="form-control" rows="5">{{word.trans}}</textarea>
+		<br>
+		<label for="example">用例</label>
+		<textarea id="InputExample" name=ex class="form-control" rows="5">{{word.ex}}</textarea>
+		<input type="submit" id="Update" name=submitbutton class="btn btn-secondary" value="更新">
+		<input type="submit" id="Delete" name=deletebutton class="btn btn-danger" value="削除" formaction="{{url_for('dic.delete_word', dic_id=session['current_dic'], word_id=word.word_id)}}" formmethod="POST">
+	</form>
+
+</div>
+
+{% endblock %}

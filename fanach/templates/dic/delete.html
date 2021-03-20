@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}辞書の削除 - {% endblock %}
+
+{% block body %}
+<br><h3>{{dictionary.dicname}}の削除</h3><br>
+<p>辞書を削除しますか？　<span class="text-danger">削除された辞書はもとに戻すことができません</span></p><br>
+	<label for="Password">パスワード:</label>
+<form action="{{url_for('dic.delete_dic', dic_id=dictionary.dic_id)}}" name=deleteform method="POST">
+	<input type="password" name=password value="" class="form-control"><br>
+	<input type="submit" class="btn btn-danger" value="辞書を削除">
+</form><br>
+<form action="{{url_for('dic.show_dic', dic_id=dictionary.dic_id)}}" name=cancel method="GET">
+	<button class="btn btn-secondary" type="submit">戻る</button>
+</form>
+{% endblock %}
