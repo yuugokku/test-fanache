@@ -58,3 +58,4 @@ class Dictionary(db.Model):
 	dicname = db.Column(db.String(50), nullable=False)
 	owner = db.Column(db.Integer, nullable=False)
 	description = db.Column(db.Text)
+	

@@ -7,7 +7,7 @@ from fanach import app, db
 from fanach.views.login import login_required
 from fanach.models.words import Word, User, Dictionary
 from fanach.utils.converter import XMLConverter
-from fanach.utils.search import find_words, Condition
+from fanach.utils.search import Condition
 
 dic = Blueprint("dic", __name__)
 converter = XMLConverter({"wordtag": "word", "transtag": "trans", "extag": "ex"})
@@ -21,7 +21,6 @@ def show_all_dics():
 # 辞書の情報を表示。辞書ページの外部リンクにはこのURLを用いる。
 @dic.route("/<int:dic_id>/info")
 def show_dic(dic_id=None):
-	print("辞書情報")
 	current_dic = Dictionary.query.get(dic_id)
 	if current_dic is None:
 		return redirect(url_for("dic.show_all_dics"))
@@ -32,10 +31,14 @@ def show_dic(dic_id=None):
 	return render_template("dic/info.html", dictionary=current_dic, owner=ownername, wordcount=wordcount)
 
 # 一つの単語を表示
-@dic.route("/<int:dic_id>/search")
+@dic.route("/<int:dic_id>/word")
 def show_word(dic_id):
 	keyword = request.args["keyword"]
-	words = Word.query.filter(Word.dic_id == dic_id, Word.word.startswith(keyword)).all()
+	target = request.args["target"]
+	if target == "word":
+		words = Word.query.filter(Word.dic_id == dic_id, Word.word.startswith(keyword)).all()
+	elif target == "trans":
+		words = Word.query.filter(Word.dic_id == dic_id, Word.trans.contains(keyword)).all()
 	dicname = Dictionary.query.get(dic_id).dicname
 	return render_template("dic/search.html", words=words, dicname=dicname)
 
@@ -238,3 +241,31 @@ def new_word(dic_id):
 			return redirect(url_for("dic.show_word", dic_id=dic_id) + "?keyword=" + word)
 		else:
 			return render_template("dic/word/new.html", keyword=keyword, word_msg=word_msg)
+
+MAX_CONDITIONS = 10
+
+# 辞書の詳細検索
+@dic.route("/<int:dic_id>/search", methods=["GET"])
+def search(dic_id):
+	dicname = Dictionary.query.get(dic_id).dicname
+	words = Word.query.filter_by(dic_id=dic_id).all()
+	words_to_show = []
+	conditions = [
+	    Condition(
+	    	keyword = request.args["keyword_" + str(i)],
+	    	option = request.args["option_" + str(i)],
+	    	)
+	    for i in range(MAX_CONDITIONS) if request.args.get("keyword_" + str(i), "").strip() != ""
+	]
+	targets = [
+	    request.args["target_" + str(i)]
+	    for i in range(MAX_CONDITIONS) if request.args.get("keyword_" + str(i), "").strip() != ""
+	]
+	print(conditions[0].keyword)
+	for w in words:
+		flags = []
+		for c, t in zip(conditions, targets):
+			flags.append(c.validate(getattr(w, t)))
+		if sum(flags) == len(flags):
+			words_to_show.append(w)
+	return render_template("dic/search.html", words=words_to_show, dicname=dicname)

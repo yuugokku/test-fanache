@@ -9,41 +9,30 @@ def xor(con1, con2):
 	return True
 
 
-def find_words(self, target, conditions, operator="or"):
-	spans = []
-	flags = []
-	for result in [cond.validate(target) for cond in conditions]:
-		spans.append(result[0])
-		flags.append(result[1])
-
-	if operator == "and":
-		return sum(flags) == len(flags), spans
-	elif operator == "or":
-		return sum(flags) > 0, spans
-
+# 条件のクラス
 class Condition():
 	def __init__(self, keyword, option="is", revert=False, regex=False):
 		self.keyword = keyword
 		self.option = option
 		self.regex = regex
+		self.revert = revert
 
 	def validate(self, target):
-		if not regex:
+		if not self.regex:
 			if self.option == "starts":
-				pattern = r"\w+" + self.keyword
+				return xor(target.startswith(self.keyword), self.revert)
 			elif self.option == "ends":
-				pattern = self.keyword + r"\w+"
+				return xor(target.endswith(self.keyword), self.revert)
 			elif self.option == "includes":
-				pattern = r"\w+" + self.keyword + r"\w+"
+				return xor(self.keyword in target, self.revert)
 			elif self.option == "is":
-				pattern = self.keyword
+				return xor(self.keyword == target, self.revert)
 
-		else:
-			pattern = self.keyword
-
+		pattern = self.keyword
+		sprint(pattern)
 		matches = re.finditer(pattern, target)
 		loc = []
 		if matches is None:
-			return xor(revert, False), loc
-		loc = [m.span for m in matches]
-		return xor(revert, True), loc
+			return xor(self.revert, False)
+		loc = [m.span() for m in matches]
+		return xor(self.revert, True)

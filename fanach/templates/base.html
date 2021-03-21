@@ -5,28 +5,30 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
         <title>{% block title %}{% endblock %}Fanache</title>
+        {% block head %}{% endblock %}
 	</head>
 	<body>
         <div class="container">
             <nav class="navbar navbar-expand-md navbar-dark" style="background-color: #9b0000">
-                <div class="container-fluid">
-                    <a class="navbar-brand" href="{{url_for('dic.show_all_dics')}}">Fanache</a>
-                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                        <ul class="navbar-nav mr-auto">
-                            {% if not session.logged_in %}
-                            <li class="navbar-item">
-                                <a class="nav-link active" aria-current="page" href="{{ url_for('login.login_form')}}">管理者ログイン</a>
-                            </li>
-                            {% else %}
-                            <li class="navbar-item">
-                                <a class="nav-link active" href="{{ url_for('dic.new_dic')}}">辞書を作成</a>
-                            </li>
-                            <li class="navbar-item">
-                                <a class="nav-link active" href="{{ url_for('login.logout') }}">ログアウト</a>
-                            </li>
-                            {% endif %}
-                        </ul>
-                        
+                <a class="navbar-brand" href="{{url_for('dic.show_all_dics')}}">Fanache</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggler" aria-controls="navbarToggler" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarToggler">
+                    <ul class="navbar-nav mr-auto">
+                    {% if not session.logged_in %}
+                        <li class="navbar-item">
+                            <a class="nav-link active" aria-current="page" href="{{ url_for('login.login_form')}}">管理者ログイン</a>
+                        </li>
+                    {% else %}
+                        <li class="navbar-item">
+                            <a class="nav-link active" href="{{ url_for('dic.new_dic')}}">辞書を作成</a>
+                        </li>
+                        <li class="navbar-item">
+                            <a class="nav-link active" href="{{ url_for('login.logout') }}">ログアウト</a>
+                        </li>
+                    {% endif %}
+                    </ul>
                         <ul class="navbar-nav ml-auto">
                         {% if not session.get("logged_in") %}
                             <li class="navbar-text">
@@ -40,9 +42,13 @@
                         {% if session.get("current_dic", default=-1) != -1 %}
                             <li class="navbar-item">
                                 <form class="form-inline" action="{{ url_for('dic.show_word', dic_id=session.get('current_dic')) }}" name=simpleSearchForm method="GET">
+                                    <select name=target id="SimpleTarget">
+                                        <option value="word" selected>見出し語</option>
+                                        <option value="trans">訳語</option>
+                                    </select>
                                     <input type="text" id="SimpleKeyword" name=keyword placeholder="単語を検索する">
                                     <input type="submit" class="btn btn-secondary" value="検索">
-                                    {% if session.get("current_dic", default=-1) != -1 and session.get("logged_in", default=False)  %}
+                                    {% if session.get("logged_in", default=False)  %}
                                     <input type="submit" class="btn btn-primary" value="追加" formaction="{{url_for('dic.new_word', dic_id=session.get('current_dic'))}}" formmethod="GET">
                                     {% endif %}
                                 </form>
@@ -62,9 +68,7 @@
                             </li>
                         {% endif %}
                         </ul>
-                    </div>
                 </div>
-                
             </nav>
             {% for message in get_flashed_messages() %}
             <div class="alert alert-info" role="alert">

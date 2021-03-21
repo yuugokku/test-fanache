@@ -5,7 +5,7 @@ import os
 with open("fanach/admin_config.json") as f:
 	admin_config = json.load(f)
 
-mode = "prod"
+mode = "dev"
 
 if mode == "dev":
 	DEBUG = True

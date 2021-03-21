@@ -2,16 +2,89 @@
 
 {% block title %}{{dictionary.dicname}} - {% endblock %}
 
+{% block head %}
+<script type="text/javascript">
+    var max_conditions = 10;
+    var num_conditions = 1;
+    var target_vals = ["word", "trans", "ex"];
+    var target_inners = ["見出し語", "訳語", "用例"];
+    var option_vals = ["is", "starts", "includes", "ends"];
+    var option_inners = ["に一致する", "で始まる", "を含む", "で終わる"];
+
+    function _addCondition(){
+        var search = document.getElementById("searchForm");
+        var div = document.createElement("div");
+        div.setAttribute("class", "px-2 py-2")
+        console.log(num_conditions);
+        var target_select = document.createElement("select");
+        target_select.name = "target_" + num_conditions;
+        for (var i = 0; i < target_vals.length; i++) {
+            var option = document.createElement("option");
+            option.value = target_vals[i];
+            option.innerHTML = target_inners[i];
+            target_select.appendChild(option);
+        }
+        div.appendChild(target_select);
+        div.innerHTML += "が";
+
+        var keyword_text = document.createElement("input");
+        keyword_text.type = "text";
+        keyword_text.name = "keyword_" + num_conditions;
+        keyword_text.value = "";
+        div.appendChild(keyword_text);
+
+        var option_select = document.createElement("select")
+        option_select.name = "option_" + num_conditions;
+        for (var i = 0; i < option_vals.length; i++) {
+            var option = document.createElement("option");
+            option.value = option_vals[i]
+            option.innerHTML = option_inners[i]
+            option_select.appendChild(option);
+        }
+        div.appendChild(option_select);
+        search.appendChild(div);
+        num_conditions++;
+
+    }
+    function addCondition(){
+        if (num_conditions < max_conditions) {
+            _addCondition();
+        }
+    }
+</script>
+{% endblock %}
+
 {% block body %}
 <br><h3 class="text-center"><a href="{{url_for('dic.show_dic', dic_id=dictionary.dic_id)}}">{{dictionary.dicname | safe}}</a></h3><br>
 <div class="alert alert-info text-center">
-	作成者: {{owner}}<br>
-	収録語数: {{wordcount}}
+    作成者: {{owner}}<br>
+    収録語数: {{wordcount}}
 </div>
 <p>{{dictionary.description | safe}}</p><br>
+<div class="bg-light rounded text-center">
+    <form id="searchForm" action="{{url_for('dic.search', dic_id=dictionary.dic_id)}}" method="GET">
+        <button type="button" id="add" class="btn btn-secondary mx-2 my-2" onclick="addCondition();">追加</button>
+        <input type="submit" class="btn btn-primary" value="検索"><br>
+        <div class="px-2 py-2">
+            <select name="target_0">
+                <option value="word">見出し語</option>
+                <option value="trans" selected>訳語</option>
+                <option value="ex">用例</option>
+            </select>が
+            <input type="text" name="keyword_0" value="">
+            <select name="option_0">
+                <option value="is">に一致する</option>
+                <option value="starts">で始まる</option>
+                <option value="includes" selected>を含む</option>
+                <option value="ends">で終わる</option>
+            </select>
+        </div>
+    </form>
+</div>
 <form action="{{url_for('dic.edit_dic', dic_id=dictionary.dic_id)}}">
-	{% if session["current_user"] == dictionary.owner %}
-	<input type="submit" class="btn btn-secondary btn-sm" value="編集">
-	{% endif %}
+    {% if session["current_user"] == dictionary.owner %}
+    <input type="submit" class="btn btn-secondary btn-sm" value="編集">
+    {% endif %}
 </form>
+
 {% endblock %}
