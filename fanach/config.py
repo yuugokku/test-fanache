@@ -11,13 +11,12 @@ if mode == "dev":
 	DEBUG = True
 	SQLALCHEMY_DATABASE_URI = "sqlite:///fanachekittatue.db"
 	SQLALCHEMY_TRACK_MODIFICATIONS = True
+	SECRET_KEY = "HqiW=WKJS5RZYfKkE0em=iB@c3G68hyyI0Il9kD2HqiW=WKJS5RZYfKkE0em=iB@c3G68hyyI0Il9kD2"
 elif mode == "prod":
 	DEBUG = False
 	SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
 	SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-# Session
-SECRET_KEY = " HqiW=WKJS5RZYfKkE0em=iB@c3G68hyyI0Il9kD2HqiW=WKJS5RZYfKkE0em=iB@c3G68hyyI0Il9kD2"
+	SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # 管理人(root, admin, subadmin)情報
 ROOT_NAME = admin_config["root_name"]
