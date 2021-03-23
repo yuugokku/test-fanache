@@ -1,12 +1,13 @@
 # dic.py : 辞書アプリのメインモジュール
+from urllib.parse import quote
 
-from flask import request, redirect, url_for, render_template, flash, session
+from flask import request, redirect, url_for, render_template, flash, session, make_response
 from flask import Blueprint
 
 from fanach import app, db
 from fanach.views.login import login_required
 from fanach.models.words import Word, User, Dictionary
-from fanach.utils.converter import XMLConverter
+from fanach.utils.converter import XMLConverter, export_csv
 from fanach.utils.search import Condition
 
 dic = Blueprint("dic", __name__)
@@ -15,32 +16,35 @@ converter = XMLConverter({"wordtag": "word", "transtag": "trans", "extag": "ex"}
 @dic.route("/")
 def show_all_dics():
 	dictionaries = Dictionary.query.all()
-	session["current_dic"] = -1
 	return render_template("dic/all.html", dictionaries=dictionaries)
 
 # 辞書の情報を表示。辞書ページの外部リンクにはこのURLを用いる。
 @dic.route("/<int:dic_id>/info")
-def show_dic(dic_id=None):
-	current_dic = Dictionary.query.get(dic_id)
-	if current_dic is None:
+def show_dic(dic_id):
+	dictionary = Dictionary.query.get(dic_id)
+	if dictionary is None:
+		flash("辞書が存在しません。")
 		return redirect(url_for("dic.show_all_dics"))
-	session["current_dic"] = current_dic.dic_id
-	ownername = User.query.get(current_dic.owner).username
-	words = Word.query.filter_by(dic_id=current_dic.dic_id).all()
+	ownername = User.query.get(dictionary.owner).username
+	words = Word.query.filter_by(dic_id=dic_id).all()
 	wordcount = len(words)
-	return render_template("dic/info.html", dictionary=current_dic, owner=ownername, wordcount=wordcount)
+	return render_template("dic/info.html", dictionaries=[], dictionary=dictionary, owner=ownername, wordcount=wordcount)
+
+@dic.route("/<int:dic_id>")
+def _show_dic(dic_id):
+	return redirect(url_for("dic.show_dic", dic_id=dic_id))
 
 # 一つの単語を表示
 @dic.route("/<int:dic_id>/word")
 def show_word(dic_id):
+	dictionary = Dictionary.query.get(dic_id)
 	keyword = request.args["keyword"]
 	target = request.args["target"]
 	if target == "word":
 		words = Word.query.filter(Word.dic_id == dic_id, Word.word.startswith(keyword)).all()
 	elif target == "trans":
 		words = Word.query.filter(Word.dic_id == dic_id, Word.trans.contains(keyword)).all()
-	dicname = Dictionary.query.get(dic_id).dicname
-	return render_template("dic/search.html", words=words, dicname=dicname)
+	return render_template("dic/search.html", dictionaries=[], dictionary=dictionary, words=words)
 
 # 辞書を新規登録
 @dic.route("/new", methods=["GET", "POST"])
@@ -49,8 +53,10 @@ def new_dic():
 	dicname_msg = ""
 	xmlfile_msg = ""
 	if request.method == "GET":
-		return render_template("dic/new.html", dicname_msg=dicname_msg)
+		dictionaries = Dictionary.query.all()
+		return render_template("dic/new.html", dictionaries=dictionaries, dicname_msg=dicname_msg, xmlfile_msg=xmlfile_msg)
 	elif request.method == "POST":
+		print("辞書を新規作成")
 		is_valid = True
 		dicname = request.form["dicname"]
 		if (len(dicname) < 1) or (len(dicname) > 50):
@@ -63,9 +69,6 @@ def new_dic():
 			if xmlfile.content_length > app.config["MAX_CONTENT_LENGTH"]:
 				is_valid = False
 				xmlfile_msg = "ファイルサイズが大きすぎます。2KB以下のファイルのみアップロードできます。"
-			if xmlfile.mimetype != "text/xml":
-				is_valid = False
-				xmlfile_msg = "XMLファイルではない可能性があります。"
 
 		if is_valid:
 			# 辞書追加の処理
@@ -80,26 +83,29 @@ def new_dic():
 			dic_id = last_dic.dic_id
 			print(dic_id)
 			flash_msg = "辞書 %s を作成しました。" % dicname
+			# ファイルアップロード
 			if xmlfile is not None:
 				xmltext = xmlfile.read()
 				# XML変換処理を挟む -> Wordテーブルに追加
-				records, info = converter.parse_xml(xmltext)
-				word_count = 0
-				for word, trans, ex in records:
-					newword = Word(
-						dic_id = dic_id,
-						word = word,
-						trans = trans,
-						ex = ex,
-						editor = session["current_user"])
-					word_count += 1
-					db.session.add(newword)
-				flash_msg += "%d語をファイルからインポートしました。" % word_count
+				if xmlfile.mimetype == "text/xml":
+					records, info = converter.parse_xml(xmltext)
+					word_count = 0
+					for word, trans, ex in records:
+						newword = Word(
+							dic_id = dic_id,
+							word = word,
+							trans = trans,
+							ex = ex,
+							editor = session["current_user"])
+						word_count += 1
+						db.session.add(newword)
+					flash_msg += "%d語をファイルからインポートしました。" % word_count
 			db.session.commit()
 			flash(flash_msg)
 			return redirect(url_for("dic.show_dic", dic_id=dic_id))
 		else:
-			return render_template("dic/new.html", dicname_msg=dicname_msg, xmlfile_msg=xmlfile_msg)
+			print("作成失敗", dicname_msg, xmlfile_msg)
+			return render_template("dic/new.html", dictionaries=[], dicname_msg=dicname_msg, xmlfile_msg=xmlfile_msg)
 
 @dic.route("/<int:dic_id>/edit", methods=["GET", "POST"])
 @login_required
@@ -109,7 +115,7 @@ def edit_dic(dic_id):
 		flash("権限がありません。辞書のデータは作成者のみ編集できます。")
 		return redirect(url_for("dic.show_dic", dic_id=dic_id))
 	if request.method == "GET":
-		return render_template("dic/edit.html", dictionary=dictionary, dicname_msg="")
+		return render_template("dic/edit.html", dictionaries=[], dictionary=dictionary, dicname_msg="")
 	elif request.method == "POST":
 		dictionary.dicname = request.form["dicname"]
 		dictionary.description = request.form["description"]
@@ -125,7 +131,7 @@ def delete_dic_prompt(dic_id):
 	dictionary = Dictionary.query.get(dic_id)
 	if session["current_user"] != dictionary.owner:
 		flash("辞書の削除は作成者のみが実行できます。")
-		return redirect(url_for("dic.show_dic", dic_id=session["current_dic"]))
+		return redirect(url_for("dic.show_dic", dic_id=dic_id))
 	return render_template("dic/delete.html", dictionary=dictionary)
 
 # 辞書の削除の処理
@@ -158,14 +164,15 @@ def delete_dic(dic_id):
 @dic.route("/<int:dic_id>/<int:word_id>", methods=["GET", "POST"])
 @login_required
 def edit_word(dic_id, word_id):
-	owner_id = Dictionary.query.get(dic_id).owner
+	dictionary = Dictionary.query.get(dic_id)
+	owner_id = dictionary.owner
 	if session["current_user"] != owner_id:
 		flash("単語を編集する権限がありません。")
-		return redirect(url_for("dic.show_dic", dic_id=session["current_dic"]))
+		return redirect(url_for("dic.show_dic", dic_id=dic_id))
 
 	word = Word.query.get(word_id)
 	if request.method == "GET":
-		return render_template("dic/word/edit.html", word=word, word_msg="")
+		return render_template("dic/word/edit.html", dictionary=dictionary, word=word, word_msg="")
 	elif request.method == "POST":
 		word_msg = ""
 		is_valid = True
@@ -183,9 +190,9 @@ def edit_word(dic_id, word_id):
 			db.session.merge(word)
 			db.session.commit()
 			flash("単語 %s を更新しました。" % updatedword)
-			return redirect(url_for("dic.show_word", dic_id=dic_id) + "?keyword=" + word.word)
+			return redirect("%s?keyword=%s&target=%s" % (url_for("dic.show_word", dic_id=dic_id), word.word, "word"))
 		else:
-			return render_template("dic/word/edit.html", word=word, word_msg=word_msg)
+			return render_template("dic/word/edit.html", dictionary=dictionary, word=word, word_msg=word_msg)
 
 @dic.route("/<int:dic_id>/<int:word_id>/delete", methods=["POST"])
 @login_required
@@ -193,7 +200,7 @@ def delete_word(dic_id, word_id):
 	owner_id = Dictionary.query.get(dic_id).owner
 	if session["current_user"] != owner_id:
 		flash("権限がありません")
-		return redirect(url_for("dic.show_dic", dic_id=session["current_dic"]))
+		return redirect(url_for("dic.show_dic", dic_id=dic_id))
 	if request.method == "POST":
 		word = Word.query.get(word_id)
 		deletedword = word.word
@@ -205,9 +212,10 @@ def delete_word(dic_id, word_id):
 @dic.route("/<int:dic_id>/new", methods=["GET", "POST"])
 @login_required
 def new_word(dic_id):
-	owner_id = Dictionary.query.get(dic_id).owner
+	dictionary = Dictionary.query.get(dic_id)
+	owner_id = dictionary.owner
 	if session["current_user"] != owner_id:
-		return redirect(url_for("dic.show_dic", dic_id=session["current_dic"]))
+		return redirect(url_for("dic.show_dic", dic_id=dic_id))
 
 	word_msg = ""
 	if request.method == "GET":
@@ -216,7 +224,7 @@ def new_word(dic_id):
 		words = Word.query.filter(Word.dic_id == dic_id, Word.word == keyword).first()
 		if words is not None:
 			word_msg = "同一の単語がすでに存在するようです。(1), (2)のように順位付けして登録することをおすすめします。"
-		return render_template("dic/word/new.html", keyword=keyword, word_msg = word_msg)
+		return render_template("dic/word/new.html", dictionary=dictionary, dictionaries=[], keyword=keyword, word_msg = word_msg)
 	elif request.method == "POST":
 		is_valid = True
 		if len(request.form["word"].strip()) == 0:
@@ -238,16 +246,17 @@ def new_word(dic_id):
 			db.session.add(newword)
 			db.session.commit()
 			flash("単語 %s を登録しました。" % word)
-			return redirect(url_for("dic.show_word", dic_id=dic_id) + "?keyword=" + word)
+			return redirect("%s?keyword=%s&target=%s" % (url_for("dic.show_word", dic_id=dic_id), word, "word"))
 		else:
-			return render_template("dic/word/new.html", keyword=keyword, word_msg=word_msg)
+			return render_template("dic/word/new.html", dictionary=dictionary, dictionaries=[], keyword=keyword, word_msg=word_msg)
 
 MAX_CONDITIONS = 10
 
 # 辞書の詳細検索
 @dic.route("/<int:dic_id>/search", methods=["GET"])
 def search(dic_id):
-	dicname = Dictionary.query.get(dic_id).dicname
+	dictionary = Dictionary.query.get(dic_id)
+	dicname = dictionary.dicname
 	words = Word.query.filter_by(dic_id=dic_id).all()
 	words_to_show = []
 	conditions = [
@@ -261,11 +270,30 @@ def search(dic_id):
 	    request.args["target_" + str(i)]
 	    for i in range(MAX_CONDITIONS) if request.args.get("keyword_" + str(i), "").strip() != ""
 	]
-	print(conditions[0].keyword)
+	if len(conditions) == 0:
+		return redirect(url_for("dic.show_dic", dic_id=dic_id))
 	for w in words:
 		flags = []
 		for c, t in zip(conditions, targets):
 			flags.append(c.validate(getattr(w, t)))
 		if sum(flags) == len(flags):
 			words_to_show.append(w)
-	return render_template("dic/search.html", words=words_to_show, dicname=dicname)
+	return render_template("dic/search.html", dictionary=dictionary, dictionaries=[], words=words_to_show)
+
+@dic.route("/<int:dic_id>/export-<string:filetype>", methods=["GET"])
+def export_dic(dic_id, filetype):
+	dictionary = Dictionary.query.get(dic_id)
+	words = Word.query.filter_by(dic_id=dic_id).all()
+	wordlist = []
+	for word in words:
+		wordlist.append([word.word, word.trans, word.ex])
+	if filetype == "xml":
+		export = converter.export_xml(wordlist)
+	if filetype == "csv":
+		export = export_csv(wordlist)
+	res = make_response()
+	res.data = export
+	res.charset = "utf-8"
+	res.mimetype = "text/%s" % filetype
+	res.headers["Content-Disposition"] = "attachment; filename=%s.%s" % (quote(dictionary.dicname, encoding="utf-8"), filetype)
+	return res

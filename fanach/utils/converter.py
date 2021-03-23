@@ -1,6 +1,18 @@
 import xml.etree.ElementTree as et
 
-# XML -> [[word, trans, ex]] の変換を行う
+def export_csv(wordlist, replace_newline="\\"):
+	cvted = ""
+	cvted += "word,trans,ex\n"
+	for word in wordlist:
+		line = ""
+		for text in word:
+			line += text.replace("\r", "").replace("\n", replace_newline)
+			line += ","
+		line = line[:-1]
+		cvted += line + "\n"
+	return cvted
+
+# XML <-> [[word, trans, ex]] の変換を行う
 class XMLConverter():
 	def __init__(self, cfg):
 		"""
@@ -32,3 +44,14 @@ class XMLConverter():
 
 			cvted.append(to_add)
 		return cvted, info
+
+	def export_xml(self, wordlist):
+		root = et.Element("fanache")
+		for word in wordlist:
+			record = et.Element("record")
+			for tag,text in zip([self.cfg["wordtag"], self.cfg["transtag"], self.cfg["extag"]], word):
+				elem = et.Element(tag)
+				elem.text = text
+				record.append(elem)
+			root.append(record)
+		return et.tostring(root, encoding="unicode", method="xml")

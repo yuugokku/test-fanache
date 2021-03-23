@@ -1,4 +1,4 @@
 manage.py
 fanach/scripts/*.py
 fanach/__pycache__/*
-fanache/fanachekittatue.db
+fanach/fanachekittatue.db

@@ -13,6 +13,8 @@
 		<br>
 		<label for="xmlfile">XMLファイル</label><span class="text-secondary">ファイルを指定しない場合、空の辞書を作成します。</span>
 		<input type="file" id="XMLFilepicker" name=xmlfile class="form-control">
+		{% if xmlfile_msg == "" %}
+		{% else %}<div class="alert alert-danger">{{ xmlfile_msg }}</div>{% endif %}
 		<br>
 		<label for="description">辞書の説明</label>
 		<textarea id="InputDescription" name=description class="form-control" rows="3"></textarea>

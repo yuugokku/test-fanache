@@ -25,7 +25,7 @@ class Word(db.Model):
 		self.editor = editor
 
 	def __repr__(self):
-		return "<Word %r, %r>" % self.word
+		return "<Word %r>" % self.word
 
 class User(db.Model):
 	__tablename__ = "users"

@@ -5,7 +5,7 @@
 {% block body %}
 <br><h3>新しい単語を登録する</h3><br>
 <div class="container-fluid mb-3">
-	<form action="{{ url_for('dic.new_word', dic_id=session['current_dic']) }}" method="POST" name="newdicform" enctype="multipart/form-data">
+	<form action="{{ url_for('dic.new_word', dic_id=dictionary.dic_id) }}" method="POST" name="newdicform" enctype="multipart/form-data">
 		<label for="word">単語名:</label>
 		<input type="text" id="InputWord" name=word class="form-control" value="{{keyword}}">
 		{% if word_msg == "" %}
