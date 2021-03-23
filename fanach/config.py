@@ -10,7 +10,7 @@ mode = "dev"
 if mode == "dev":
 	DEBUG = True
 	LOCAL_PASSWORD = os.environ.get("")
-	SQLALCHEMY_DATABASE_URI = "postgresql://kpht:smv!26715@localhost/testfanache.db"
+	SQLALCHEMY_DATABASE_URI = "sqlite:///fanachekittatue.db"
 	SQLALCHEMY_TRACK_MODIFICATIONS = True
 	SECRET_KEY = "HqiW=WKJS5RZYfKkE0em=iB@c3G68hyyI0Il9kD2HqiW=WKJS5RZYfKkE0em=iB@c3G68hyyI0Il9kD2"
 elif mode == "prod":
