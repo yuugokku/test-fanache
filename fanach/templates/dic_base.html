@@ -15,7 +15,7 @@
                                 <span class="text-light">{{session["screenname"]}}</span>
                             </li>
                         {% endif %}
-                        {% if dictionaries.__len__() == 0 %}
+                        {% if dictionary is defined %}
                             <li class="navbar-item">
                                 <form class="form-inline" action="{{ url_for('dic.show_word', dic_id=dictionary.dic_id) }}" name=simpleSearchForm method="GET">
                                     <select name=target id="SimpleTarget">

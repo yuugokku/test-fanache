@@ -1,7 +1,9 @@
+import re
+import hashlib
+
 from flask import request, redirect, url_for, render_template, flash, session
 from flask import Blueprint
 from functools import wraps
-import re
 
 from fanach import app, db
 from fanach.models.words import Word, User, Dictionary
@@ -10,6 +12,10 @@ MIN_PASSWORD_LENGTH = 8
 MAX_PASSWORD_LENGTH = 50
 
 login = Blueprint("login", __name__)
+
+def authenticate(user_id, formpassword):
+	hashed_password = User.query.get(user_id).password
+	return hashlib.sha256(formpassword.encode()).hexdigest() == hashed_password
 
 def login_required(view):
 	@wraps(view)
@@ -27,7 +33,7 @@ def login_form():
 		user = User.query.filter_by(username=request.form["username"]).first()
 		if user is None:
 			error_msg = "ユーザ名が異なります"
-		elif request.form["password"] != user.password:
+		elif not authenticate(user.user_id, request.form["password"]):
 			error_msg = "パスワードが異なります"
 		else:
 			session["logged_in"] = True
@@ -94,7 +100,7 @@ def register():
 			user = User(
 				username = username,
 				screenname = username,
-				password = password,
+				password = hashlib.sha256(password.encode()).hexdigest(),
 				email = email,
 				twitter_id = "",
 				profile = "")

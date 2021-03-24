@@ -19,10 +19,8 @@ elif mode == "prod":
 	SQLALCHEMY_TRACK_MODIFICATIONS = False
 	SECRET_KEY = os.environ.get("SECRET_KEY")
 
-# 管理人(root, admin, subadmin)情報
 ROOT_NAME = admin_config["root_name"]
 ADMIN_NAME = admin_config["admin_name"]
 SUBADMIN_NAME = admin_config["subadmin_name"]
 
-# ファイル送信
 MAX_CONTENT_LENGTH = 2 * 1024 * 1024

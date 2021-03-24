@@ -1,6 +1,6 @@
 {% extends "dic_base.html" %}
 
-{% block title %}{{dicname}} - {% endblock %}
+{% block title %}{{dictionary.dicname}} - {% endblock %}
 
 {% block body %}
 <br><h3 class="text-center"><a href="{{url_for('dic.show_dic', dic_id=dictionary.dic_id)}}">{{dictionary.dicname | safe}}</a></h3><br>

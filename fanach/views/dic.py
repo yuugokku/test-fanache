@@ -5,7 +5,7 @@ from flask import request, redirect, url_for, render_template, flash, session, m
 from flask import Blueprint
 
 from fanach import app, db
-from fanach.views.login import login_required
+from fanach.views.login import login_required, authenticate
 from fanach.models.words import Word, User, Dictionary
 from fanach.utils.converter import XMLConverter, export_csv
 from fanach.utils.search import Condition
@@ -149,7 +149,7 @@ def delete_dic(dic_id):
 		deleted_dicname = dictionary.dicname
 		user = User.query.get(session["current_user"])
 		password = request.form["password"]
-		if password != user.password:
+		if not authenticate(user.user_id, password):
 			flash("パスワードが異なります。")
 			return redirect(url_for("dic.show_dic", dic_id=dic_id))
 		db.session.delete(dictionary)
