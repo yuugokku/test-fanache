@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "dic_base.html" %}
 
 {% block title %}{{dictionary.dicname}} - {% endblock %}
 
@@ -63,7 +63,7 @@
 <p>{{dictionary.description | safe}}</p><br>
 <div class="bg-light rounded text-center">
     <form id="searchForm" action="{{url_for('dic.search', dic_id=dictionary.dic_id)}}" method="GET">
-        <button type="button" id="add" class="btn btn-secondary mx-2 my-2" onclick="addCondition();">追加</button>
+        <button type="button" id="add" class="btn btn-secondary mx-2 my-2" onclick="addCondition();">条件を追加</button>
         <input type="submit" class="btn btn-primary" value="検索"><br>
         <div class="px-2 py-2">
             <select name="target_0">
