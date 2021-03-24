@@ -21,7 +21,11 @@
                                     <input type="text" id="SimpleKeyword" name=keyword placeholder="単語を検索する">
                                     <input type="submit" class="btn btn-secondary" value="検索">
                                     {% if session.get("logged_in", default=False)  %}
-                                    <input type="submit" class="btn btn-primary" value="追加" formaction="{{url_for('dic.new_word', dic_id=dictionary.dic_id)}}" formmethod="GET">
+                                    {% if session.get("logged_in", default=0) == dictionary.owner %}
+                                    <input type="submit" class="btn btn-primary" value="登録" formaction="{{url_for('dic.new_word', dic_id=dictionary.dic_id)}}" formmethod="GET">
+                                    {% else %}
+                                    <input type="submit" class="btn btn-primary" value="提案" formaction="{{url_for('dic.suggest_word', dic_id=dictionary.dic_id)}}" formmethod="GET">
+                                    {% endif %}
                                     {% endif %}
                                 </form>
                             </li>

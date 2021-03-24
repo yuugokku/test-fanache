@@ -14,6 +14,7 @@ class Word(db.Model):
 	trans = db.Column(db.Text)
 	ex = db.Column(db.Text)
 	created_at = db.Column(db.DateTime, default=datetime.utcnow)
+	updated_at =db.Column(db.DateTime, default=datetime.utcnow)
 	editor = db.Column(db.Integer)
 
 	def __init__(self, dic_id, word, trans, ex, editor, **kwargs):
@@ -58,4 +59,26 @@ class Dictionary(db.Model):
 	dicname = db.Column(db.String(50), nullable=False)
 	owner = db.Column(db.Integer, nullable=False)
 	description = db.Column(db.Text)
+	created_at = db.Column(db.DateTime, default=datetime.utcnow)
+	updated_at =db.Column(db.DateTime, default=datetime.utcnow)
 	
+class Suggestion(db.Model):
+	__tablename__ = "sugestions"
+
+	sug_id = db.Column(db.Integer, primary_key=True)
+	title = db.Column(db.String(200), nullable=False)
+	description = db.Column(db.Text)
+	client = db.Column(db.Integer, nullable=False)
+	dic_id = db.Column(db.Integer, nullable=False)
+	done = db.Column(db.Boolean, nullable=False)
+	created_at = db.Column(db.DateTime)
+	completed_at = db.Column(db.DateTime)
+
+	def __init__(title, description, client, dic_id, done=False):
+		self.title = title
+		self.description = description
+		self.client = client
+		self.dic_id = dic_id
+		self.done = False
+		self.created_at = datetime.utcnow()
+		self.completed_at = None

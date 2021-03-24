@@ -5,11 +5,11 @@ import os
 with open("fanach/admin_config.json") as f:
 	admin_config = json.load(f)
 
-mode = "prod"
+mode = "dev"
 
 if mode == "dev":
 	DEBUG = True
-	SQLALCHEMY_DATABASE_URI = ""
+	SQLALCHEMY_DATABASE_URI = "postgresql://kpht:smv!26715@localhost/testfanache.db"
 	SQLALCHEMY_TRACK_MODIFICATIONS = True
 	SECRET_KEY = "HqiW=WKJS5RZYfKkE0em=iB@c3G68hyyI0Il9kD2HqiW=WKJS5RZYfKkE0em=iB@c3G68hyyI0Il9kD2"
 elif mode == "prod":

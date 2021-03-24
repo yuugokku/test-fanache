@@ -18,5 +18,12 @@
 </div><br>
 {% else %}
 該当する単語はありません。
+{% if not session.get("logged_in") %}
+	<a href="{{url_for('login.login_form')}}">ログイン</a>して造語依頼を出そう！
+{% else %}
+	{% if session.get("current_user") == dictionary.owner %}
+	<a href="{{url_for('dic.new_word', dic_id=dictionary.dic_id)}}?keyword={{keyword}}">{{keyword}}を造語する。</a>
+	{% endif %}
+{% endif %}
 {% endfor %}
 {% endblock %}

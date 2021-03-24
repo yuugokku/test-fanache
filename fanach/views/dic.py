@@ -8,11 +8,10 @@ from sqlalchemy import or_
 from fanach import app, db
 from fanach.views.login import login_required, authenticate
 from fanach.models.words import Word, User, Dictionary
-from fanach.utils.converter import XMLConverter, export_csv
+from fanach.utils.converter import parse_xml, export_xml, parse
 from fanach.utils.search import Condition
 
 dic = Blueprint("dic", __name__)
-converter = XMLConverter({"wordtag": "word", "transtag": "trans", "extag": "ex"})
 
 @dic.route("/")
 def show_all_dics():
@@ -46,12 +45,13 @@ def show_word(dic_id):
 			Word.dic_id == dic_id, 
 			or_(Word.word.startswith(keyword), Word.trans.contains(keyword))
 		).all()
+		target = "word"
 	else:
 		if target == "word":
-			words = Word.query.filter(Word.dic_id == dic_id, Word.word.startswith(keyword))
+			words = Word.query.filter(Word.dic_id == dic_id, Word.word.startswith(keyword)).all()
 		elif target == "trans":
-			words = Word.query.filter(Word.dic_id == dic_id, Word.word.contains(keyword))
-	return render_template("dic/search.html", dictionaries=[], dictionary=dictionary, words=words)
+			words = Word.query.filter(Word.dic_id == dic_id, Word.word.contains(keyword)).all()
+	return render_template("dic/search.html", keyword=keyword, target=target, dictionary=dictionary, words=words)
 
 # 辞書を新規登録
 @dic.route("/new", methods=["GET", "POST"])
@@ -63,7 +63,6 @@ def new_dic():
 		dictionaries = Dictionary.query.all()
 		return render_template("dic/new.html", dictionaries=dictionaries, dicname_msg=dicname_msg, xmlfile_msg=xmlfile_msg)
 	elif request.method == "POST":
-		print("辞書を新規作成")
 		is_valid = True
 		dicname = request.form["dicname"]
 		if (len(dicname) < 1) or (len(dicname) > 50):
@@ -88,14 +87,15 @@ def new_dic():
 			db.session.commit()
 			last_dic = Dictionary.query.order_by(Dictionary.dic_id.desc()).first()
 			dic_id = last_dic.dic_id
-			print(dic_id)
 			flash_msg = "辞書 %s を作成しました。" % dicname
 			# ファイルアップロード
 			if xmlfile is not None:
 				xmltext = xmlfile.read()
+				print(type(xmltext))
 				# XML変換処理を挟む -> Wordテーブルに追加
-				if xmlfile.mimetype == "text/xml":
-					records, info = converter.parse_xml(xmltext)
+				if xmlfile.mimetype in ["text/xml", "text/csv"]:
+					print(xmlfile.content_type)
+					records = parse(xmltext, xmlfile.mimetype)
 					word_count = 0
 					for word, trans, ex in records:
 						newword = Word(
@@ -300,7 +300,7 @@ def export_dic(dic_id, filetype):
 	for word in words:
 		wordlist.append([word.word, word.trans, word.ex])
 	if filetype == "xml":
-		export = converter.export_xml(wordlist)
+		export = export_xml(wordlist)
 	if filetype == "csv":
 		export = export_csv(wordlist)
 	res = make_response()
@@ -309,3 +309,30 @@ def export_dic(dic_id, filetype):
 	res.mimetype = "text/%s" % filetype
 	res.headers["Content-Disposition"] = "attachment; filename=%s.%s" % (quote(dictionary.dicname, encoding="utf-8"), filetype)
 	return res
+
+@dic.route("/<int:dic_id>/suggest", methods=["GET", "POST"])
+@login_required
+def sugest_word(dic_id):
+	title_msg = ""
+	if request.method == "GET":
+		keyword = request.form["keyword"]
+		return render_template("dic/suggest.html", keyword=keyword, title_msg=title_msg, description=description)
+	elif request.method == "POST":
+		is_valid = True
+		title = request.form["keyword"]
+		description = request.form["description"]
+		if title.strip() == "":
+			title_msg = "依頼内容を入力してください。"
+		if is_valid:
+			suggestion = Suggestion(
+				title = title,
+				description = description,
+				client = session["current_user"],
+				dic_id = dic_id,
+			)
+			db.session.add(suggestion)
+			db.session.commit()
+			flash("造語を提案しました")
+			return redirect(url_for("dic.show_dic", dic_id=dic_id))
+		else:
+			return render_template("dic/suggest.html", keyword=keyword, title_msg=title_msg, description=description)
