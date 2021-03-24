@@ -3,6 +3,7 @@ from urllib.parse import quote
 
 from flask import request, redirect, url_for, render_template, flash, session, make_response
 from flask import Blueprint
+from sqlalchemy import or_
 
 from fanach import app, db
 from fanach.views.login import login_required, authenticate
@@ -39,11 +40,17 @@ def _show_dic(dic_id):
 def show_word(dic_id):
 	dictionary = Dictionary.query.get(dic_id)
 	keyword = request.args["keyword"]
-	target = request.args["target"]
-	if target == "word":
-		words = Word.query.filter(Word.dic_id == dic_id, Word.word.startswith(keyword)).all()
-	elif target == "trans":
-		words = Word.query.filter(Word.dic_id == dic_id, Word.trans.contains(keyword)).all()
+	target = request.args.get("target", default=None)
+	if target is None:
+		words = Word.query.filter(
+			Word.dic_id == dic_id, 
+			or_(Word.word.startswith(keyword), Word.trans.contains(keyword))
+		).all()
+	else:
+		if target == "word":
+			words = Word.query.filter(Word.dic_id == dic_id, Word.word.startswith(keyword))
+		elif target == "trans":
+			words = Word.query.filter(Word.dic_id == dic_id, Word.word.contains(keyword))
 	return render_template("dic/search.html", dictionaries=[], dictionary=dictionary, words=words)
 
 # 辞書を新規登録
@@ -275,7 +282,12 @@ def search(dic_id):
 	for w in words:
 		flags = []
 		for c, t in zip(conditions, targets):
-			flags.append(c.validate(getattr(w, t)))
+			if t == "wordtrans":
+				flags.append(c.validate(getattr(w, "word")) or c.validate(getattr(w, "trans")))
+			elif t == "rhyme":
+				flags.append(c.validate(getattr(w, "word"), rhyme=True))
+			else:
+				flags.append(c.validate(getattr(w, t)))
 		if sum(flags) == len(flags):
 			words_to_show.append(w)
 	return render_template("dic/search.html", dictionary=dictionary, dictionaries=[], words=words_to_show)

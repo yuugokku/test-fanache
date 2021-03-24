@@ -6,10 +6,10 @@
 <script type="text/javascript">
     var max_conditions = 10;
     var num_conditions = 1;
-    var target_vals = ["word", "trans", "ex"];
-    var target_inners = ["見出し語", "訳語", "用例"];
-    var option_vals = ["is", "starts", "includes", "ends"];
-    var option_inners = ["に一致する", "で始まる", "を含む", "で終わる"];
+    var target_vals = ["wordtrans", "word", "trans", "ex", "rhyme"];
+    var target_inners = ["見出し+訳語", "見出し語", "訳語", "用例", "韻律"];
+    var option_vals = ["is", "starts", "includes", "ends", "rhyme", "regex"];
+    var option_inners = ["に一致する", "で始まる", "を含む", "で終わる", "の正規表現にハマる"];
 
     function _addCondition(){
         var search = document.getElementById("searchForm");
@@ -42,6 +42,7 @@
             option_select.appendChild(option);
         }
         div.appendChild(option_select);
+
         search.appendChild(div);
         num_conditions++;
 
@@ -67,9 +68,11 @@
         <input type="submit" class="btn btn-primary" value="検索"><br>
         <div class="px-2 py-2">
             <select name="target_0">
+                <option value="wordtrans" selected>見+訳</option>
                 <option value="word">見出し語</option>
-                <option value="trans" selected>訳語</option>
+                <option value="trans">訳語</option>
                 <option value="ex">用例</option>
+                <option value="rhyme">韻律</option>
             </select>が
             <input type="text" name="keyword_0" value="">
             <select name="option_0">
@@ -77,6 +80,7 @@
                 <option value="starts">で始まる</option>
                 <option value="includes" selected>を含む</option>
                 <option value="ends">で終わる</option>
+                <option value="regex">の正規表現にハマる</option>
             </select>
         </div>
     </form>

@@ -18,10 +18,6 @@
                         {% if dictionary is defined %}
                             <li class="navbar-item">
                                 <form class="form-inline" action="{{ url_for('dic.show_word', dic_id=dictionary.dic_id) }}" name=simpleSearchForm method="GET">
-                                    <select name=target id="SimpleTarget">
-                                        <option value="word" selected>見出し語</option>
-                                        <option value="trans">訳語</option>
-                                    </select>
                                     <input type="text" id="SimpleKeyword" name=keyword placeholder="単語を検索する">
                                     <input type="submit" class="btn btn-secondary" value="検索">
                                     {% if session.get("logged_in", default=False)  %}
