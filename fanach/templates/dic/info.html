@@ -7,8 +7,8 @@
     var max_conditions = 10;
     var num_conditions = 1;
     var target_vals = ["wordtrans", "word", "trans", "ex", "rhyme"];
-    var target_inners = ["見出し+訳語", "見出し語", "訳語", "用例", "韻律"];
-    var option_vals = ["is", "starts", "includes", "ends", "rhyme", "regex"];
+    var target_inners = ["見+訳", "見出し語", "訳語", "用例", "韻律"];
+    var option_vals = ["is", "starts", "includes", "ends", "regex"];
     var option_inners = ["に一致する", "で始まる", "を含む", "で終わる", "の正規表現にハマる"];
 
     function _addCondition(){
@@ -58,10 +58,12 @@
 {% block body %}
 <br><h3 class="text-center"><a href="{{url_for('dic.show_dic', dic_id=dictionary.dic_id)}}">{{dictionary.dicname | safe}}</a></h3><br>
 <div class="alert alert-info text-center">
-    作成者: {{owner}}<br>
-    収録語数: {{wordcount}}
+    作成者: {{dictionary.owner.screenname}}<br>
+    収録語数: {{dictionary.words.all().__len__()}}<br>
+    作成日時: {{dictionary.created_at | timedelta}}前<br>
+    最終更新: {{dictionary.updated_at | timedelta}}前
 </div>
-<p>{{dictionary.description | safe}}</p><br>
+<p>{{dictionary.description}}</p><br>
 <div class="bg-light rounded text-center">
     <form id="searchForm" action="{{url_for('dic.search', dic_id=dictionary.dic_id)}}" method="GET">
         <button type="button" id="add" class="btn btn-secondary mx-2 my-2" onclick="addCondition();">条件を追加</button>
@@ -87,7 +89,7 @@
 </div>
 <form action="{{url_for('dic.edit_dic', dic_id=dictionary.dic_id)}}">
     <div class="dropdown">
-        {% if session["current_user"] == dictionary.owner %}
+        {% if session["current_user"] == dictionary.owner.user_id %}
         <input type="submit" class="btn btn-secondary btn-sm" value="編集">
         {% endif %}
         <button type="button" class="btn btn-success btn-sm dropdown-toggle" id="exportDropdown" data-toggle="dropdown" aria-expanded="false">
@@ -99,5 +101,24 @@
         </ul>
     </div>
 </form>
+<br><br><h3>造語依頼の一覧</h4>
+{% for s in dictionary.suggestions.all() %}
+<div class="alert alert-secondary">
+<h5>{{s.title}}<br>
+<small class="text-muted">{{s.client.screenname}}による依頼</small></h5>
+<p>{{s.description}}<br>
+<small>
+日時: {{s.created_at | timedelta}}前
+</small></p>
+</div>
+{% else %}
+造語依頼はありません。
+{% endfor %}
+{% if not session.get("logged_in") %}
+<a href="{{url_for('login.login_form')}}">ログイン</a>して造語依頼できます
+{% else%}
+<a href="{{url_for('dic.suggest_word', dic_id=dictionary.dic_id)}}"><button class="btn btn-info btn-sm">造語依頼</button></a>
+
+{% endif %}
 
 {% endblock %}

@@ -2,39 +2,34 @@
 
 from datetime import datetime
 
-from fanach import db
+from fanach import db, app
 
 class Word(db.Model):
 
-	__tablename__ = "words"
+	__tablename__ = "word"
 
 	word_id = db.Column(db.Integer, primary_key=True)
-	dic_id = db.Column(db.Integer, nullable=False)
+	dic_id = db.Column(db.Integer, db.ForeignKey("dictionary.dic_id"), nullable=False)
+	editor_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
 	word = db.Column(db.String(200), nullable=False)
 	trans = db.Column(db.Text)
 	ex = db.Column(db.Text)
 	created_at = db.Column(db.DateTime, default=datetime.utcnow)
 	updated_at =db.Column(db.DateTime, default=datetime.utcnow)
-	editor = db.Column(db.Integer)
-
-	def __init__(self, dic_id, word, trans, ex, editor, **kwargs):
-		super(Word, self).__init__(**kwargs)
-		self.dic_id = dic_id
-		self.word = word
-		self.trans = trans
-		self.ex = ex
-		self.editor = editor
 
 	def __repr__(self):
 		return "<Word %r>" % self.word
 
 class User(db.Model):
-	__tablename__ = "users"
+	__tablename__ = "user"
 
 	user_id = db.Column(db.Integer, primary_key=True)
 	username = db.Column(db.String(50), nullable=False)
 	password = db.Column(db.String(64), nullable=False)
 	screenname = db.Column(db.String(50))
+	dictionaries = db.relationship("Dictionary", backref="owner", lazy="dynamic", cascade="all, delete")
+	contributions = db.relationship("Word", backref="editor", lazy="dynamic", cascade="all, delete")
+	suggestions = db.relationship("Suggestion", backref="client", lazy="dynamic", cascade="all, delete")
 	email = db.Column(db.String(50), nullable=False)
 	twitter_id = db.Column(db.String(50), default="")
 	profile = db.Column(db.Text, default="")
@@ -53,32 +48,25 @@ class User(db.Model):
 		self.profile = profile
 
 class Dictionary(db.Model):
-	__tablename__ = "dictionaries"
+	__tablename__ = "dictionary"
 
 	dic_id = db.Column(db.Integer, primary_key=True)
 	dicname = db.Column(db.String(50), nullable=False)
-	owner = db.Column(db.Integer, nullable=False)
+	words = db.relationship("Word", backref="dictionary", lazy="dynamic", cascade="all, delete")
+	owner_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
 	description = db.Column(db.Text)
+	suggestions = db.relationship("Suggestion", backref="dictionary", lazy="dynamic", cascade="all, delete")
 	created_at = db.Column(db.DateTime, default=datetime.utcnow)
 	updated_at =db.Column(db.DateTime, default=datetime.utcnow)
 	
 class Suggestion(db.Model):
-	__tablename__ = "sugestions"
+	__tablename__ = "suggestion"
 
 	sug_id = db.Column(db.Integer, primary_key=True)
+	dic_id = db.Column(db.Integer, db.ForeignKey("dictionary.dic_id"), nullable=False)
+	client_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
 	title = db.Column(db.String(200), nullable=False)
 	description = db.Column(db.Text)
-	client = db.Column(db.Integer, nullable=False)
-	dic_id = db.Column(db.Integer, nullable=False)
-	done = db.Column(db.Boolean, nullable=False)
-	created_at = db.Column(db.DateTime)
-	completed_at = db.Column(db.DateTime)
-
-	def __init__(title, description, client, dic_id, done=False):
-		self.title = title
-		self.description = description
-		self.client = client
-		self.dic_id = dic_id
-		self.done = False
-		self.created_at = datetime.utcnow()
-		self.completed_at = None
+	created_at = db.Column(db.DateTime, default=datetime.utcnow)
+	completed_at = db.Column(db.DateTime, default=None)
+	solution = db.Column(db.String(30), nullable=False, default=app.config["SOLUTION_UNREAD"])

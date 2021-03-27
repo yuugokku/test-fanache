@@ -1,5 +1,6 @@
 # dic.py : 辞書アプリのメインモジュール
 from urllib.parse import quote
+from datetime import datetime
 
 from flask import request, redirect, url_for, render_template, flash, session, make_response
 from flask import Blueprint
@@ -7,7 +8,7 @@ from sqlalchemy import or_
 
 from fanach import app, db
 from fanach.views.login import login_required, authenticate
-from fanach.models.words import Word, User, Dictionary
+from fanach.models.words import Word, User, Dictionary, Suggestion
 from fanach.utils.converter import parse_xml, export_xml, parse
 from fanach.utils.search import Condition
 
@@ -15,8 +16,13 @@ dic = Blueprint("dic", __name__)
 
 @dic.route("/")
 def show_all_dics():
-	dictionaries = Dictionary.query.all()
-	return render_template("dic/all.html", dictionaries=dictionaries)
+	dictionaries = Dictionary.query.order_by(Dictionary.updated_at).limit(10).all()
+	if not session.get("logged_in", default=False):
+		my_dics = []
+	else:
+		user = User.query.get(session["current_user"])
+		my_dics = user.dictionaries.order_by(Dictionary.updated_at).all()
+	return render_template("dic/all.html", dictionaries=dictionaries, my_dics=my_dics)
 
 # 辞書の情報を表示。辞書ページの外部リンクにはこのURLを用いる。
 @dic.route("/<int:dic_id>/info")
@@ -25,10 +31,9 @@ def show_dic(dic_id):
 	if dictionary is None:
 		flash("辞書が存在しません。")
 		return redirect(url_for("dic.show_all_dics"))
-	ownername = User.query.get(dictionary.owner).username
-	words = Word.query.filter_by(dic_id=dic_id).all()
-	wordcount = len(words)
-	return render_template("dic/info.html", dictionaries=[], dictionary=dictionary, owner=ownername, wordcount=wordcount)
+	ownername = dictionary.owner.username
+	words = dictionary.words.all()
+	return render_template("dic/info.html", dictionaries=[], dictionary=dictionary)
 
 @dic.route("/<int:dic_id>")
 def _show_dic(dic_id):
@@ -45,7 +50,7 @@ def show_word(dic_id):
 			Word.dic_id == dic_id, 
 			or_(Word.word.startswith(keyword), Word.trans.contains(keyword))
 		).all()
-		target = "word"
+		target = "trans"
 	else:
 		if target == "word":
 			words = Word.query.filter(Word.dic_id == dic_id, Word.word.startswith(keyword)).all()
@@ -77,11 +82,11 @@ def new_dic():
 				xmlfile_msg = "ファイルサイズが大きすぎます。2KB以下のファイルのみアップロードできます。"
 
 		if is_valid:
+			owner = User.query.get(session["current_user"])
 			# 辞書追加の処理
-			owner_id = session["current_user"]
 			dictionary = Dictionary(
 				dicname = dicname,
-				owner = owner_id,
+				owner = owner,
 				description = request.form["description"])
 			db.session.add(dictionary)
 			db.session.commit()
@@ -91,19 +96,17 @@ def new_dic():
 			# ファイルアップロード
 			if xmlfile is not None:
 				xmltext = xmlfile.read()
-				print(type(xmltext))
 				# XML変換処理を挟む -> Wordテーブルに追加
 				if xmlfile.mimetype in ["text/xml", "text/csv"]:
-					print(xmlfile.content_type)
 					records = parse(xmltext, xmlfile.mimetype)
 					word_count = 0
 					for word, trans, ex in records:
 						newword = Word(
-							dic_id = dic_id,
+							dictionary = dictionary,
 							word = word,
 							trans = trans,
 							ex = ex,
-							editor = session["current_user"])
+							editor = owner)
 						word_count += 1
 						db.session.add(newword)
 					flash_msg += "%d語をファイルからインポートしました。" % word_count
@@ -118,7 +121,7 @@ def new_dic():
 @login_required
 def edit_dic(dic_id):
 	dictionary = Dictionary.query.get(dic_id)
-	if session["current_user"] != dictionary.owner:
+	if session["current_user"] != dictionary.owner.user_id:
 		flash("権限がありません。辞書のデータは作成者のみ編集できます。")
 		return redirect(url_for("dic.show_dic", dic_id=dic_id))
 	if request.method == "GET":
@@ -136,7 +139,7 @@ def edit_dic(dic_id):
 @login_required
 def delete_dic_prompt(dic_id):
 	dictionary = Dictionary.query.get(dic_id)
-	if session["current_user"] != dictionary.owner:
+	if session["current_user"] != dictionary.owner.user_id:
 		flash("辞書の削除は作成者のみが実行できます。")
 		return redirect(url_for("dic.show_dic", dic_id=dic_id))
 	return render_template("dic/delete.html", dictionary=dictionary)
@@ -149,7 +152,7 @@ def delete_dic(dic_id):
 	if dictionary is None:
 		flash("辞書が存在しません。")
 		return redirect(url_for("dic.show_all_dics"))
-	if session["current_user"] != dictionary.owner:
+	if session["current_user"] != dictionary.owner.user_id:
 		flash("辞書の削除は作成者のみが実行できます。")
 		return redirect(url_for("dic.show_dic", dic_id=dic_id))
 	if request.method == "POST":
@@ -159,10 +162,9 @@ def delete_dic(dic_id):
 		if not authenticate(user.user_id, password):
 			flash("パスワードが異なります。")
 			return redirect(url_for("dic.show_dic", dic_id=dic_id))
-		db.session.delete(dictionary)
-		words_to_delete = Word.query.filter_by(dic_id=dic_id).all()
-		for w in words_to_delete:
+		for w in dictionary.words.all():
 			db.session.delete(w)
+		db.session.delete(dictionary)
 		db.session.commit()
 		flash("辞書 %s を削除しました。" % deleted_dicname)
 		return redirect(url_for("dic.show_all_dics"))
@@ -172,12 +174,12 @@ def delete_dic(dic_id):
 @login_required
 def edit_word(dic_id, word_id):
 	dictionary = Dictionary.query.get(dic_id)
-	owner_id = dictionary.owner
-	if session["current_user"] != owner_id:
+	if session["current_user"] != dictionary.owner.user_id:
 		flash("単語を編集する権限がありません。")
 		return redirect(url_for("dic.show_dic", dic_id=dic_id))
 
 	word = Word.query.get(word_id)
+	editor = User.query.get(session["current_user"])
 	if request.method == "GET":
 		return render_template("dic/word/edit.html", dictionary=dictionary, word=word, word_msg="")
 	elif request.method == "POST":
@@ -193,7 +195,9 @@ def edit_word(dic_id, word_id):
 			word.word = updatedword
 			word.trans = request.form["trans"]
 			word.ex = request.form["ex"]
-			word.editor = session["current_user"]
+			word.editor = editor
+			word.updated_at = datetime.utcnow()
+			dictionary.updated_at = datetime.utcnow()
 			db.session.merge(word)
 			db.session.commit()
 			flash("単語 %s を更新しました。" % updatedword)
@@ -204,14 +208,15 @@ def edit_word(dic_id, word_id):
 @dic.route("/<int:dic_id>/<int:word_id>/delete", methods=["POST"])
 @login_required
 def delete_word(dic_id, word_id):
-	owner_id = Dictionary.query.get(dic_id).owner
-	if session["current_user"] != owner_id:
+	dictionary = Dictionary.query.get(dic_id)
+	if session["current_user"] != dictionary.owner.user_id:
 		flash("権限がありません")
 		return redirect(url_for("dic.show_dic", dic_id=dic_id))
 	if request.method == "POST":
 		word = Word.query.get(word_id)
 		deletedword = word.word
 		db.session.delete(word)
+		dictionary.updated_at = datetime.utcnow()
 		db.session.commit()
 		flash("単語 %s が削除されました" % deletedword)
 		return redirect(url_for("dic.show_dic", dic_id=dic_id))
@@ -220,20 +225,23 @@ def delete_word(dic_id, word_id):
 @login_required
 def new_word(dic_id):
 	dictionary = Dictionary.query.get(dic_id)
-	owner_id = dictionary.owner
-	if session["current_user"] != owner_id:
+	if session["current_user"] != dictionary.owner.user_id:
 		return redirect(url_for("dic.show_dic", dic_id=dic_id))
 
 	word_msg = ""
 	if request.method == "GET":
 		# 造語フォーム
 		keyword = request.args["keyword"]
+		target = request.args.get("target", default="")
+		if target == "":
+			target = "word"
 		words = Word.query.filter(Word.dic_id == dic_id, Word.word == keyword).first()
 		if words is not None:
 			word_msg = "同一の単語がすでに存在するようです。(1), (2)のように順位付けして登録することをおすすめします。"
-		return render_template("dic/word/new.html", dictionary=dictionary, dictionaries=[], keyword=keyword, word_msg = word_msg)
+		return render_template("dic/word/new.html", dictionary=dictionary, dictionaries=[], keyword=keyword, target=target, word_msg = word_msg)
 	elif request.method == "POST":
 		is_valid = True
+		editor = User.query.get(session["current_user"])
 		if len(request.form["word"].strip()) == 0:
 			is_valid = False
 			word_msg = "単語を入力してください。"
@@ -245,12 +253,13 @@ def new_word(dic_id):
 			trans = request.form["trans"]
 			ex = request.form["ex"]
 			newword = Word(
-				dic_id = dic_id,
+				dictionary = dictionary,
 				word = word,
 				trans = trans,
 				ex = ex,
-				editor = session["current_user"])
+				editor = editor)
 			db.session.add(newword)
+			dictionary.updated_at = datetime.utcnow()
 			db.session.commit()
 			flash("単語 %s を登録しました。" % word)
 			return redirect("%s?keyword=%s&target=%s" % (url_for("dic.show_word", dic_id=dic_id), word, "word"))
@@ -264,7 +273,7 @@ MAX_CONDITIONS = 10
 def search(dic_id):
 	dictionary = Dictionary.query.get(dic_id)
 	dicname = dictionary.dicname
-	words = Word.query.filter_by(dic_id=dic_id).all()
+	words = dictionary.words.all()
 	words_to_show = []
 	conditions = [
 	    Condition(
@@ -295,7 +304,7 @@ def search(dic_id):
 @dic.route("/<int:dic_id>/export-<string:filetype>", methods=["GET"])
 def export_dic(dic_id, filetype):
 	dictionary = Dictionary.query.get(dic_id)
-	words = Word.query.filter_by(dic_id=dic_id).all()
+	words = dictionary.words.all()
 	wordlist = []
 	for word in words:
 		wordlist.append([word.word, word.trans, word.ex])
@@ -312,11 +321,12 @@ def export_dic(dic_id, filetype):
 
 @dic.route("/<int:dic_id>/suggest", methods=["GET", "POST"])
 @login_required
-def sugest_word(dic_id):
+def suggest_word(dic_id):
 	title_msg = ""
+	dictionary = Dictionary.query.get(dic_id)
+	client = User.query.get(session["current_user"])
 	if request.method == "GET":
-		keyword = request.form["keyword"]
-		return render_template("dic/suggest.html", keyword=keyword, title_msg=title_msg, description=description)
+		return render_template("dic/suggest.html", dictionary=dictionary, keyword="", title_msg=title_msg, description="")
 	elif request.method == "POST":
 		is_valid = True
 		title = request.form["keyword"]
@@ -327,12 +337,13 @@ def sugest_word(dic_id):
 			suggestion = Suggestion(
 				title = title,
 				description = description,
-				client = session["current_user"],
-				dic_id = dic_id,
+				client = client,
+				dictionary = dictionary,
 			)
 			db.session.add(suggestion)
 			db.session.commit()
 			flash("造語を提案しました")
 			return redirect(url_for("dic.show_dic", dic_id=dic_id))
 		else:
-			return render_template("dic/suggest.html", keyword=keyword, title_msg=title_msg, description=description)
+			return render_template("dic/suggest.html", dictionary=dictionary, keyword=keyword, title_msg=title_msg, description=description)
+

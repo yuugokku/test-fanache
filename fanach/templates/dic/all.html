@@ -4,11 +4,27 @@
 
 {% block body %}
 <br><h3>Fanache je Fanachekitta<br>
-    <small class="text-muted">Fanacheではkphtの人工言語の辞書を検索できます。</small></h3><br>
-{% for d in dictionaries %}
-<div class="container border-primary rounded">
+    <small class="text-muted">Fanacheでは人工言語の辞書を作成し、オンラインで公開することができます。</small></h3><br>
+{% if not session.get("logged_in") %}
+<p><a href="{{url_for('login.login_form')}}">ログイン</a>して辞書を作成できます。</p>
+{% else %}<h4>自分の辞書</h4>
+{% for d in my_dics %}
+<div class="border-primary rounded">
 <h5><a class="text-" href="{{ url_for('dic.show_dic', dic_id=d.dic_id) }}">{{d.dicname}}</a></h5>
-<p>{{d.description}}</p>
+<p>最終更新: {{d.updated_at | timedelta}}<br>
+{{d.description}}</p>
+</div>
+{% else %}
+まだ自分の辞書が存在しません。<a href="{{url_for('dic.new_dic')}}">新規作成できます。</a>
+{% endfor %}
+{% endif %}
+<br><br>
+<h4>最近更新された辞書</h4>
+{% for d in dictionaries %}
+<div class="border-primary rounded">
+<h5><a class="text-" href="{{ url_for('dic.show_dic', dic_id=d.dic_id) }}">{{d.dicname}}</a></h5>
+<p>作成者: {{d.owner.screenname}} 最終更新: {{d.updated_at | timedelta}}<br>
+{{d.description}}</p>
 </div>
 {% else %}
 辞書が存在しません。追加されるのを待ちましょう。

@@ -26,7 +26,7 @@ def login_required(view):
 	return inner
 
 # /login/ ログイン画面、処理
-@login.route("/", methods=["GET", "POST"])
+@login.route("/login", methods=["GET", "POST"])
 def login_form():
 	error_msg = ""
 	if request.method == "POST":
@@ -43,7 +43,7 @@ def login_form():
 	return render_template("login.html", error_msg=error_msg)
 
 # /login/no-out ログアウト処理
-@login.route("/no-out")
+@login.route("/logout")
 def logout():
 	session["logged_in"] = False
 	session["current_user"] = None
@@ -123,6 +123,17 @@ def register():
 	elif request.method == "GET":
 		return render_template("register.html", username_msg="", email_msg="", password_msg="")
 
+@login.route("/suggestions", methods=["GET"])
+@login_required
+def show_suggestions():
+	user = User.query.get(session.get("current_user", default=0))
+	if user is None:
+		return redirect(url_for("login.logout"))
+	suggestions = []
+	for d in user.dictionaries.all():
+		for s in d.suggestions.all():
+			suggestions.append(s)
+	return render_template("tasks.html", suggestions=suggestions)
 
 @login.app_errorhandler(404)
 def non_existant_route(error):

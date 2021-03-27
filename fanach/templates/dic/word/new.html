@@ -7,12 +7,12 @@
 <div class="container-fluid mb-3">
 	<form action="{{ url_for('dic.new_word', dic_id=dictionary.dic_id) }}" method="POST" name="newdicform" enctype="multipart/form-data">
 		<label for="word">単語名:</label>
-		<input type="text" id="InputWord" name=word class="form-control" value="{{keyword}}">
+		<input type="text" id="InputWord" name=word class="form-control" value="{% if target == 'word' %}{{keyword}}{% endif %}">
 		{% if word_msg == "" %}
 		{% else %}<div class="alert alert-warning">{{ word_msg }}</div>{% endif %}
 		<br>
 		<label for="translation">訳語</label>
-		<textarea id="InputTranslation" name=trans class="form-control" rows="5"></textarea>
+		<textarea id="InputTranslation" name=trans class="form-control" rows="5">{% if target == 'trans' %}{{keyword}}{% endif %}</textarea>
 		<br>
 		<label for="example">用例</label>
 		<textarea id="InputExample" name=ex class="form-control" rows="5"></textarea>

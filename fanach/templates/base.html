@@ -25,6 +25,9 @@
                             <a class="nav-link active" href="{{ url_for('dic.new_dic')}}">辞書を作成</a>
                         </li>
                         <li class="navbar-item">
+                            <a class="nav-link active" href="{{url_for('login.show_suggestions')}}">造語依頼</a>
+                        </li>
+                        <li class="navbar-item">
                             <a class="nav-link active" href="{{ url_for('login.logout') }}">ログアウト</a>
                         </li>
                     {% endif %}

@@ -5,15 +5,15 @@
 {% block body %}
 <br><h3>造語を提案する</h3><br>
 <div class="container-fluid mb-3">
-	<form action="{{ url_for('dic.sugest_word') }}" method="POST" name="suggestform">
+	<form action="{{ url_for('dic.suggest_word', dic_id=dictionary.dic_id) }}" method="POST" name="suggestform">
 		<label>訳語・単語:</label>
 		<input type="text" id="Translation" name=keyword placeholder="造語するべき単語を入力" class="form-control" value="{{keyword}}">
 		{% if title_msg == "" %}
 		{% else %}<div class="alert alert-warning">{{ title_msg }}</div>{% endif %}
 		<br>
 		<label>説明</label>
-		<textarea placeholder="提案の詳細を入力" name=description></textarea>
-		<input type="submit" id="Submit" name=submitbutton class="btn btn-primary" value="提案">
+		<textarea class="form-control" placeholder="提案の詳細を入力" name=description rows=10></textarea>
+		<input type="submit" id="Submit" name=submitbutton class="btn btn-primary mt-2" value="提案">
 	</form>
 
 </div>

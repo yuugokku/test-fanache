@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}造語依頼 - {% endblock %}
+
+{% block body %}
+<br><h3>造語依頼</h3><br>
+<div>
+{% for s in suggestions %}
+<div class="alert alert-secondary">
+<h5>{{s.title}}<br>
+<small class="text-muted">{{s.client.screenname}}による依頼</small></h5>
+<p>{{s.description}}<br>
+<small>
+辞書: <a href="{{url_for('dic.show_dic', dic_id=s.dictionary.dic_id)}}">{{s.dictionary.dicname}}</a><br>
+日時: {{s.created_at | timedelta}}前
+</small></p>
+</div>
+{% else %}
+造語依頼はありません。
+{% endfor %}
+</div>
+{% endblock %}

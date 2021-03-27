@@ -10,10 +10,16 @@
 {% for word in words %}
 <div class="border rounded">
 <h5 class="ml-2 my-2">{{word.word}}</h5>
+{% if session.get("logged_in", default=False) %}
 <a href="{{url_for('dic.edit_word', dic_id=dictionary.dic_id, word_id=word.word_id)}}" class="ml-1"><button class="btn btn-secondary btn-sm">編集</button></a>
+{% endif %}
 <div class="container-fluid">
 <p class="my-2">{{word.trans}}</p>
 <p>{{word.ex}}</p>
+<p class="font-weight-light">
+作成: {{ word.created_at | timedelta }}前<br>
+更新: {{ word.updated_at | timedelta }}前
+</p>
 </div>
 </div><br>
 {% else %}
@@ -21,8 +27,8 @@
 {% if not session.get("logged_in") %}
 	<a href="{{url_for('login.login_form')}}">ログイン</a>して造語依頼を出そう！
 {% else %}
-	{% if session.get("current_user") == dictionary.owner %}
-	<a href="{{url_for('dic.new_word', dic_id=dictionary.dic_id)}}?keyword={{keyword}}">{{keyword}}を造語する。</a>
+	{% if session.get("current_user") == dictionary.owner %}<a href="{{url_for('dic.new_word', dic_id=dictionary.dic_id)}}?keyword={{keyword}}&target={{target}}">造語する。</a>
+	{% else %}作者に<a href="{{url_for('dic.suggest_word', dic_id=dictionary.dic_id)}}">造語依頼</a>を出すことができます。
 	{% endif %}
 {% endif %}
 {% endfor %}
