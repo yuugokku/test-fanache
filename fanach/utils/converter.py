@@ -6,6 +6,8 @@ def export_csv(wordlist, replace_newline="\\"):
 	for word in wordlist:
 		line = ""
 		for text in word:
+			if text is None:
+				text = ""
 			line += text.replace("\r", "").replace("\n", replace_newline)
 			line += ","
 		line = line[:-1]
@@ -16,6 +18,7 @@ def parse_csv(csvtext):
 	cvted = []
 	for line in csvtext.splitlines():
 		record = line.split(",")
+		print(record)
 		for _ in range(len(record), 3):
 			record.append("")
 		if len(record) > 3:

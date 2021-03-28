@@ -3,9 +3,9 @@
 {% block title %}造語依頼 - {% endblock %}
 
 {% block body %}
-<br><h3>造語依頼</h3><br>
+<br><h3>未解決の造語依頼</h3><br>
 <div>
-{% for s in suggestions %}
+{% for s in suggestions if s.solution == config["SOLUTION_UNREAD"] %}
 <div class="alert alert-secondary">
 <h5>{{s.title}}<br>
 <small class="text-muted">{{s.client.screenname}}による依頼</small></h5>
@@ -14,9 +14,36 @@
 辞書: <a href="{{url_for('dic.show_dic', dic_id=s.dictionary.dic_id)}}">{{s.dictionary.dicname}}</a><br>
 日時: {{s.created_at | timedelta}}前
 </small></p>
+<button class="btn btn-secondary" data-toggle="collapse" data-target="#replyform_{{s.sug_id}}" aria-expanded="false" aria-controls="replyform_{{s.sug_id}}">対応する</button>
+<div class="collapse" id="replyform_{{s.sug_id}}">
+    <div class="card card-body">
+        <form action="{{url_for('dic.reply_suggestion', dic_id=s.dictionary.dic_id, sug_id=s.sug_id)}}" method="POST">
+            <textarea class="form-control" placeholder="なにかを造語しました。" name="reply_{{s.sug_id}}" rows=3></textarea><br>
+            <input type="submit" class="btn btn-primary" value="送信">
+        </form>
+    </div>
+</div>
 </div>
 {% else %}
 造語依頼はありません。
+{% endfor %}
+</div>
+
+<br><h3>解決済みの造語依頼</h3><br>
+<div>
+{% for s in suggestions if s.solution == config["SOLUTION_SOLVED"] %}
+<div class="alert alert-secondary">
+<h5>{{s.title}}<br>
+<small class="text-muted">{{s.client.screenname}}による依頼 ({{s.completed_at | timedelta }}前に解決済み)</small></h5>
+<p>{{s.description}}<br>
+<ul>{{s.reply}}</ul>
+<small>
+辞書: <a href="{{url_for('dic.show_dic', dic_id=s.dictionary.dic_id)}}">{{s.dictionary.dicname}}</a><br>
+日時: {{s.created_at | timedelta}}前<br>
+</small></p>
+</div>
+{% else %}
+何も解決していません。
 {% endfor %}
 </div>
 {% endblock %}

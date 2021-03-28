@@ -101,24 +101,13 @@
         </ul>
     </div>
 </form>
-<br><br><h3>造語依頼の一覧</h4>
-{% for s in dictionary.suggestions.all() %}
-<div class="alert alert-secondary">
-<h5>{{s.title}}<br>
-<small class="text-muted">{{s.client.screenname}}による依頼</small></h5>
-<p>{{s.description}}<br>
-<small>
-日時: {{s.created_at | timedelta}}前
-</small></p>
-</div>
-{% else %}
-造語依頼はありません。
-{% endfor %}
+<div>
+<br>
 {% if not session.get("logged_in") %}
 <a href="{{url_for('login.login_form')}}">ログイン</a>して造語依頼できます
 {% else%}
 <a href="{{url_for('dic.suggest_word', dic_id=dictionary.dic_id)}}"><button class="btn btn-info btn-sm">造語依頼</button></a>
 
 {% endif %}
-
+</div>
 {% endblock %}

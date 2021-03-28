@@ -133,6 +133,7 @@ def show_suggestions():
 	for d in user.dictionaries.all():
 		for s in d.suggestions.all():
 			suggestions.append(s)
+	suggestions = sorted(suggestions, key=lambda s: s.created_at, reverse=True)
 	return render_template("tasks.html", suggestions=suggestions)
 
 @login.app_errorhandler(404)

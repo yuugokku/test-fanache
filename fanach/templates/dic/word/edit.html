@@ -17,7 +17,7 @@
 		<label for="example">用例</label>
 		<textarea id="InputExample" name=ex class="form-control" rows="5">{{word.ex}}</textarea>
 		<input type="submit" id="Update" name=submitbutton class="btn btn-secondary" value="更新">
-		<input type="button" id="Delete" name=deletebutton class="btn btn-danger" value="削除" formaction="{{url_for('dic.delete_word', dic_id=dictionary.dic_id, word_id=word.word_id)}}" formmethod="POST">
+		<input type="submit" id="Delete" name=deletebutton class="btn btn-danger" value="削除" formaction="{{url_for('dic.delete_word', dic_id=dictionary.dic_id, word_id=word.word_id)}}" formmethod="POST">
 	</form>
 
 </div>

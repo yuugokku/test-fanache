@@ -9,19 +9,19 @@ from sqlalchemy import or_
 from fanach import app, db
 from fanach.views.login import login_required, authenticate
 from fanach.models.words import Word, User, Dictionary, Suggestion
-from fanach.utils.converter import parse_xml, export_xml, parse
+from fanach.utils.converter import parse_xml, export_xml, parse, export_csv
 from fanach.utils.search import Condition
 
 dic = Blueprint("dic", __name__)
 
 @dic.route("/")
 def show_all_dics():
-	dictionaries = Dictionary.query.order_by(Dictionary.updated_at).limit(10).all()
+	dictionaries = Dictionary.query.order_by(Dictionary.updated_at.desc()).limit(10).all()
 	if not session.get("logged_in", default=False):
 		my_dics = []
 	else:
 		user = User.query.get(session["current_user"])
-		my_dics = user.dictionaries.order_by(Dictionary.updated_at).all()
+		my_dics = user.dictionaries.order_by(Dictionary.updated_at.desc()).all()
 	return render_template("dic/all.html", dictionaries=dictionaries, my_dics=my_dics)
 
 # 辞書の情報を表示。辞書ページの外部リンクにはこのURLを用いる。
@@ -90,8 +90,6 @@ def new_dic():
 				description = request.form["description"])
 			db.session.add(dictionary)
 			db.session.commit()
-			last_dic = Dictionary.query.order_by(Dictionary.dic_id.desc()).first()
-			dic_id = last_dic.dic_id
 			flash_msg = "辞書 %s を作成しました。" % dicname
 			# ファイルアップロード
 			if xmlfile is not None:
@@ -112,7 +110,7 @@ def new_dic():
 					flash_msg += "%d語をファイルからインポートしました。" % word_count
 			db.session.commit()
 			flash(flash_msg)
-			return redirect(url_for("dic.show_dic", dic_id=dic_id))
+			return redirect(url_for("dic.show_dic", dic_id=dictionary.dic_id))
 		else:
 			print("作成失敗", dicname_msg, xmlfile_msg)
 			return render_template("dic/new.html", dictionaries=[], dicname_msg=dicname_msg, xmlfile_msg=xmlfile_msg)
@@ -347,3 +345,16 @@ def suggest_word(dic_id):
 		else:
 			return render_template("dic/suggest.html", dictionary=dictionary, keyword=keyword, title_msg=title_msg, description=description)
 
+@dic.route("/<int:dic_id>/<int:sug_id>/reply", methods=["POST"])
+@login_required
+def reply_suggestion(dic_id, sug_id):
+	suggestion = Suggestion.query.get(sug_id)
+	dictionary = suggestion.dictionary
+	if session.get("current_user", default=0) != dictionary.owner.user_id:
+		flash("辞書の所有者のみが造語依頼に返信できます。")
+	suggestion.reply = request.form["reply_%d" % sug_id]
+	suggestion.solution = app.config["SOLUTION_SOLVED"]
+	suggestion.completed_at = datetime.utcnow()
+	db.session.merge(suggestion)
+	db.session.commit()
+	return redirect(url_for("login.show_suggestions"))

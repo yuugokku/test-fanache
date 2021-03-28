@@ -70,3 +70,4 @@ class Suggestion(db.Model):
 	created_at = db.Column(db.DateTime, default=datetime.utcnow)
 	completed_at = db.Column(db.DateTime, default=None)
 	solution = db.Column(db.String(30), nullable=False, default=app.config["SOLUTION_UNREAD"])
+	reply = db.Column(db.Text, default="")
