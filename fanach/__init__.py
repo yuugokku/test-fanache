@@ -46,3 +46,11 @@ def format_timedelta(dt):
 		return "%d分" % minutes
 	else:
 		return "%d秒" % td.seconds
+
+from fanach.utils.markdown import parse_md
+
+@app.template_filter("markdown")
+def md2html(md):
+	if md is None:
+		return ""
+	return parse_md(md)

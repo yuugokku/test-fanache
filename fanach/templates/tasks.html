@@ -9,7 +9,7 @@
 <div class="alert alert-secondary">
 <h5>{{s.title}}<br>
 <small class="text-muted">{{s.client.screenname}}による依頼</small></h5>
-<p>{{s.description}}<br>
+<p>{{s.description | markdown | safe}}<br>
 <small>
 辞書: <a href="{{url_for('dic.show_dic', dic_id=s.dictionary.dic_id)}}">{{s.dictionary.dicname}}</a><br>
 日時: {{s.created_at | timedelta}}前

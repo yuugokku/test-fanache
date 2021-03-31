@@ -63,7 +63,7 @@
     作成日時: {{dictionary.created_at | timedelta}}前<br>
     最終更新: {{dictionary.updated_at | timedelta}}前
 </div>
-<p>{{dictionary.description}}</p><br>
+<p>{{dictionary.description | markdown | safe}}</p><br>
 <div class="bg-light rounded text-center">
     <form id="searchForm" action="{{url_for('dic.search', dic_id=dictionary.dic_id)}}" method="GET">
         <button type="button" id="add" class="btn btn-secondary mx-2 my-2" onclick="addCondition();">条件を追加</button>

@@ -14,8 +14,8 @@
 <a href="{{url_for('dic.edit_word', dic_id=dictionary.dic_id, word_id=word.word_id)}}" class="ml-1"><button class="btn btn-secondary btn-sm">編集</button></a>
 {% endif %}
 <div class="container-fluid">
-<p class="my-2">{{word.trans}}</p>
-<p>{{word.ex}}</p>
+<div class="my-2">{{word.trans | markdown | safe}}</div>
+<div>{{word.ex | markdown | safe}}</div>
 <p class="font-weight-light">
 作成: {{ word.created_at | timedelta }}前<br>
 更新: {{ word.updated_at | timedelta }}前
