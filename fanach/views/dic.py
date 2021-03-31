@@ -21,7 +21,10 @@ def show_all_dics():
 		my_dics = []
 	else:
 		user = User.query.get(session["current_user"])
-		my_dics = user.dictionaries.order_by(Dictionary.updated_at.desc()).all()
+		if user is None:
+			my_dics = []
+		else:
+			my_dics = user.dictionaries.order_by(Dictionary.updated_at.desc()).all()
 	return render_template("dic/all.html", dictionaries=dictionaries, my_dics=my_dics)
 
 # 辞書の情報を表示。辞書ページの外部リンクにはこのURLを用いる。
