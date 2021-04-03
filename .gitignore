@@ -2,3 +2,4 @@ manage.py
 fanach/scripts/*.py
 fanach/__pycache__/*
 fanach/fanachekittatue.db
+.env

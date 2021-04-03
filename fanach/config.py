@@ -5,18 +5,17 @@ import os
 with open("fanach/admin_config.json") as f:
 	admin_config = json.load(f)
 
-mode = "prod"
+SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+SECRET_KEY = os.environ.get("SECRET_KEY")
+
+mode = "dev"
 
 if mode == "dev":
 	DEBUG = True
-	SQLALCHEMY_DATABASE_URI = ""
 	SQLALCHEMY_TRACK_MODIFICATIONS = True
-	SECRET_KEY = "HqiW=WKJS5RZYfKkE0em=iB@c3G68hyyI0Il9kD2HqiW=WKJS5RZYfKkE0em=iB@c3G68hyyI0Il9kD2"
 elif mode == "prod":
 	DEBUG = False
-	SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
 	SQLALCHEMY_TRACK_MODIFICATIONS = False
-	SECRET_KEY = os.environ.get("SECRET_KEY")
 
 ROOT_NAME = admin_config["root_name"]
 ADMIN_NAME = admin_config["admin_name"]

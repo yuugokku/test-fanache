@@ -34,8 +34,6 @@ def show_dic(dic_id):
 	if dictionary is None:
 		flash("辞書が存在しません。")
 		return redirect(url_for("dic.show_all_dics"))
-	ownername = dictionary.owner.username
-	words = dictionary.words.all()
 	return render_template("dic/info.html", dictionaries=[], dictionary=dictionary)
 
 @dic.route("/<int:dic_id>")
