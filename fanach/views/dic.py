@@ -271,7 +271,6 @@ MAX_CONDITIONS = 10
 @dic.route("/<int:dic_id>/search", methods=["GET"])
 def search(dic_id):
 	dictionary = Dictionary.query.get(dic_id)
-	dicname = dictionary.dicname
 	words = dictionary.words.all()
 	words_to_show = []
 	conditions = [

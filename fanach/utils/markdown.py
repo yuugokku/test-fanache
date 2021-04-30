@@ -77,7 +77,6 @@ def _inlines(line):
 	style_names = ["b", "i", "u", "s"]
 	for p, n in zip(style_pats, style_names):
 		line = re.sub(p, r"<%s>\1</%s>" % (n, n), line)
-		print(re.search(p, line))
 	link_pat = re.compile(r"\[(\S+)\]\((\S+)\)")
 	line = re.sub(link_pat, "<a href=\"\\2\">\\1</a>", line)
 	return line
@@ -109,6 +108,7 @@ def parse_md(mdtext):
 		"table_mode": False,
 	}
 	cvted = ""
+	mdtext = _avoid_tags(mdtext)
 	mdlines = mdtext.splitlines()
 	for line in mdlines:
 		line, line_status = _beginning_of_line(line, line_status)
@@ -118,3 +118,8 @@ def parse_md(mdtext):
 		if not line_status["table_mode"]:
 			cvted += "<br>"
 	return cvted
+
+def _avoid_tags(text):
+	tag_pat = r"<([^>]*?)>"
+	text = re.sub(tag_pat, "&lt;\\1&gt;",text)
+	return text

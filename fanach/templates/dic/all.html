@@ -12,7 +12,7 @@
 <div class="border-primary rounded">
 <h5><a class="text-" href="{{ url_for('dic.show_dic', dic_id=d.dic_id) }}">{{d.dicname}}</a></h5>
 <p>最終更新: {{d.updated_at | timedelta}}<br>
-{{d.description}}</p>
+{{d.description | markdown | safe}}</p>
 </div>
 {% else %}
 まだ自分の辞書が存在しません。<a href="{{url_for('dic.new_dic')}}">新規作成できます。</a>
@@ -24,7 +24,7 @@
 <div class="border-primary rounded">
 <h5><a class="text-" href="{{ url_for('dic.show_dic', dic_id=d.dic_id) }}">{{d.dicname}}</a></h5>
 <p>作成者: {{d.owner.screenname}} 最終更新: {{d.updated_at | timedelta}}<br>
-{{d.description}}</p>
+{{d.description | markdown | safe}}</p>
 </div>
 {% else %}
 辞書が存在しません。追加されるのを待ちましょう。
