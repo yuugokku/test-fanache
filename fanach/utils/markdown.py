@@ -17,7 +17,7 @@ markers = {
     "strike": ~~,
 }
 link = [ ]( )
-image = [ ]
+image = ![ ]
 """
 
 
@@ -118,7 +118,7 @@ def _inlines_escaped(line):
         # print(re.search(p, line))
     link_pat = re.compile(r"\[([^\t]+?)\]\((\S+?)\)")
     line = re.sub(link_pat, "<a href=\"\\2\">\\1</a>", line)
-    image_pat = re.compile(r"\[(\S+)\]")
+    image_pat = re.compile(r"!\[(\S+)\]")
     line = re.sub(image_pat, "<img src=\"\\1\" class=\"%s\">" % image_class, line) 
     return line
 
