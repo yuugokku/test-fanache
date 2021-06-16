@@ -48,7 +48,7 @@ def show_all_dics():
     result_dict = {}
     result_dict["dictionaries"] = [dic_join(d) for d in dictionaries]
     print(result_dict)
-    res.data = json.dumps(result_dict)
+    res.data = json.dumps(result_dict, ensure_ascii=False)
     return res
 
 @api.route("/<int:dic_id>/info")
@@ -58,7 +58,7 @@ def show_dic(dic_id):
     if dictionary is None:
         res.data = json.dumps({})
         return res
-    res.data = json.dumps(dic_join(dictionary))
+    res.data = json.dumps(dic_join(dictionary), ensure_ascii=False)
     return res
 
 
@@ -83,7 +83,7 @@ def show_word(dic_id):
     result_dict["target"] = target
     result_dict["words"] = [word_join(w) for w in words]
     print(result_dict)
-    res.data = json.dumps(result_dict)
+    res.data = json.dumps(result_dict, ensure_ascii=False)
     return res
 
 MAX_CONDITIONS = 10
@@ -122,5 +122,5 @@ def search(dic_id):
                 flags.append(c.validate(getattr(w, t)))
         if sum(flags) == len(flags):
             result_dict["words"].append(word_join(w))
-    res.data = json.dumps(result_dict, default=condition_default)
+    res.data = json.dumps(result_dict, default=condition_default, ensure_ascii=False)
     return res
