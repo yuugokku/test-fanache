@@ -20,6 +20,14 @@ class Word(db.Model):
     def __repr__(self):
         return "<Word %r>" % self.word
 
+    def toDict(self):
+        result_dict = self.__dict__
+        result_dict.pop("_sa_instance_state")
+        for k in result_dict.keys():
+            if type(result_dict[k]) is datetime:
+                result_dict[k] = result_dict[k].strftime("%Y-%m-%d %H:%M:%S:%f")
+        return result_dict
+
 class User(db.Model):
     __tablename__ = "user"
 
@@ -47,6 +55,15 @@ class User(db.Model):
         self.twitter_id = twitter_id
         self.profile = profile
 
+    def toDict(self):
+        result_dict = self.__dict__
+        result_dict.pop("_sa_instance_state")
+        for k in result_dict.keys():
+            if type(result_dict[k]) is datetime:
+                result_dict[k] = result_dict[k].strftime("%Y-%m-%d %H:%M:%S:%f")
+        return result_dict
+
+
 class Dictionary(db.Model):
     __tablename__ = "dictionary"
 
@@ -59,6 +76,15 @@ class Dictionary(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at =db.Column(db.DateTime, default=datetime.utcnow)
     
+    def toDict(self):
+        result_dict = self.__dict__
+        result_dict.pop("_sa_instance_state")
+        for k in result_dict.keys():
+            if type(result_dict[k]) is datetime:
+                result_dict[k] = result_dict[k].strftime("%Y-%m-%d %H:%M:%S:%f")
+        return result_dict
+
+
 class Suggestion(db.Model):
     __tablename__ = "suggestion"
 
@@ -71,3 +97,11 @@ class Suggestion(db.Model):
     completed_at = db.Column(db.DateTime, default=None)
     solution = db.Column(db.String(30), nullable=False, default=app.config["SOLUTION_UNREAD"])
     reply = db.Column(db.Text, default="")
+
+    def toDict(self):
+        result_dict = self.__dict__
+        result_dict.pop("_sa_instance_state")
+        for k in result_dict.keys():
+            if type(result_dict[k]) is datetime:
+                result_dict[k] = result_dict[k].strftime("%Y-%m-%d %H:%M:%S:%f")
+        return result_dict
