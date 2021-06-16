@@ -40,7 +40,7 @@ def show_dic(dic_id):
 def _show_dic(dic_id):
     return redirect(url_for("dic.show_dic", dic_id=dic_id))
 
-# 一つの単語を表示
+# キーワード検索
 @dic.route("/<int:dic_id>/word")
 def show_word(dic_id):
     dictionary = Dictionary.query.get(dic_id)
