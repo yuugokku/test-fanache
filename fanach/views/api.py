@@ -105,7 +105,7 @@ def search(dic_id):
             ]
     res = make_api_response()
     result_dict = {}
-    result_dict["conditions"] = [{"target": t, "condition": c} for t, c in zip(targets, conditions)]
+    result_dict["conditions"] = [{"target": t, "keyword": c.keyword, "option": c.option} for t, c in zip(targets, conditions)]
     if len(conditions) == 0:
         result_dict["words"] = [word_join(w) for w in words]
         res.data = json.dumps(result_dict)
