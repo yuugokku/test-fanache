@@ -2,11 +2,11 @@
 from urllib.parse import quote
 from datetime import datetime
 
-from flask import app
 from flask import request, redirect, url_for, session, make_response
 from flask import Blueprint
 from sqlalchemy import or_
 
+from fanach import app
 from fanach.models.words import Word, User, Dictionary, Suggestion
 from fanach.utils.search import Condition, condition_default
 

@@ -272,6 +272,7 @@ def search(dic_id):
     words = dictionary.words.all()
     words_to_show = []
     MAX_CONDITIONS = app.config["MAX_CONDITIONS"]
+    print(MAX_CONDITIONS)
     conditions = [
             Condition(
                 keyword = request.args["keyword_" + str(i)],
