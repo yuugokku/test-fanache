@@ -2,14 +2,12 @@
 from urllib.parse import quote
 from datetime import datetime
 
-from flask import request, redirect, url_for, render_template, flash, session, make_response
+from flask import app
+from flask import request, redirect, url_for, session, make_response
 from flask import Blueprint
 from sqlalchemy import or_
 
-from fanach import app, db
-from fanach.views.login import login_required, authenticate
 from fanach.models.words import Word, User, Dictionary, Suggestion
-from fanach.utils.converter import export_xml, parse, export_csv
 from fanach.utils.search import Condition, condition_default
 
 import json
@@ -76,22 +74,21 @@ def show_word(dic_id):
         if target == "word":
             words = Word.query.filter(Word.dic_id == dic_id, Word.word.startswith(keyword)).all()
         elif target == "trans":
-            words = Word.query.filter(Word.dic_id == dic_id, Word.word.contains(keyword)).all()
+            words = Word.query.filter(Word.dic_id == dic_id, Word.trans.contains(keyword)).all()
     res = make_api_response()
     result_dict = {}
     result_dict["keyword"] = keyword
     result_dict["target"] = target
     result_dict["words"] = [word_join(w) for w in words]
-    print(result_dict)
     res.data = json.dumps(result_dict, ensure_ascii=False)
     return res
 
-MAX_CONDITIONS = 10
 
 @api.route("/<dic_id>/search", methods=["GET"])
 def search(dic_id):
     dictionary = Dictionary.query.get(dic_id)
     words = dictionary.words.all()
+    MAX_CONDITIONS = app.config["MAX_CONDITIONS"]
     conditions = [
             Condition(
                 keyword = request.args["keyword_" + str(i)],

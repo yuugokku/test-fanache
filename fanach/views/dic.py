@@ -264,7 +264,6 @@ def new_word(dic_id):
         else:
             return render_template("dic/word/new.html", dictionary=dictionary, dictionaries=[], keyword=keyword, word_msg=word_msg)
 
-MAX_CONDITIONS = 10
 
 # 辞書の詳細検索
 @dic.route("/<int:dic_id>/search", methods=["GET"])
@@ -272,6 +271,7 @@ def search(dic_id):
     dictionary = Dictionary.query.get(dic_id)
     words = dictionary.words.all()
     words_to_show = []
+    MAX_CONDITIONS = app.config["MAX_CONDITIONS"]
     conditions = [
             Condition(
                 keyword = request.args["keyword_" + str(i)],
