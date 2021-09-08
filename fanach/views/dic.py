@@ -17,7 +17,7 @@ dic = Blueprint("dic", __name__)
 
 @dic.route("/")
 def show_all_dics():
-    dictionaries = all_dics()
+    dictionaries = Dictionary.query.order_by(Dictionary.updated_at.desc()).limit(10).all()
     if not session.get("logged_in", default=False):
         my_dics = []
     else:

@@ -18,8 +18,6 @@ app.register_blueprint(dic, url_prefix="/dic")
 app.register_blueprint(login, url_prefix="/user")
 app.register_blueprint(api, url_prefix="/api")
 
-# viewファイル
-from fanach.views import dic, login
 
 from fanach.models.words import *
 

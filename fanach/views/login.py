@@ -5,6 +5,8 @@ from flask import request, redirect, url_for, render_template, session
 from flask import Blueprint
 from functools import wraps
 
+from flask.json import jsonify
+
 from fanach import db
 from fanach.models.words import User
 
@@ -39,15 +41,26 @@ def login_form():
             session["logged_in"] = True
             session["current_user"] = user.user_id
             session["screenname"] = user.screenname
-            return redirect(url_for("dic.show_all_dics"))
-    return render_template("login.html", error_msg=error_msg)
+            if request.accept_mimetypes.accept_html:
+                return redirect(url_for("dic.show_all_dics"))
+            if request.accept_mimetypes.accept_json:
+                return jsonify(
+                        status="success",
+                        user_id=user.user_id,
+                        screenname=user.screenname
+                        )
+
+    if request.accept_mimetypes.accept_html:
+        return render_template("login.html", error_msg=error_msg)
+    if request.accept_mimetypes.accept_json:
+        return jsonify(status="fail", message=error_msg)
 
 # /login/no-out ログアウト処理
 @login.route("/logout")
 def logout():
     session["logged_in"] = False
     session["current_user"] = None
-    session["screenname"] = "ゲスト"
+    session["screenname"] = ""
     return redirect(url_for("dic.show_all_dics"))
 
 # /login/register ユーザ登録
