@@ -12,11 +12,12 @@ from fanach.models.words import Word, User, Dictionary, Suggestion
 from fanach.utils.converter import export_xml, parse, export_csv
 from fanach.utils.search import Condition
 
+
 dic = Blueprint("dic", __name__)
 
 @dic.route("/")
 def show_all_dics():
-    dictionaries = Dictionary.query.order_by(Dictionary.updated_at.desc()).limit(10).all()
+    dictionaries = all_dics()
     if not session.get("logged_in", default=False):
         my_dics = []
     else:

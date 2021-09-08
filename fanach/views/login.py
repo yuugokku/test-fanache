@@ -6,7 +6,7 @@ from flask import Blueprint
 from functools import wraps
 
 from fanach import db
-from fanach.models.words import Word, User, Dictionary
+from fanach.models.words import User
 
 MIN_PASSWORD_LENGTH = 8
 MAX_PASSWORD_LENGTH = 50

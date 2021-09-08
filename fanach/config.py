@@ -4,6 +4,7 @@ import os
 
 
 SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+print(os.environ.get("DATABASE_URL"))
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
 mode = "prod"
@@ -15,7 +16,7 @@ elif mode == "prod":
     DEBUG = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-MAX_CONTENT_LENGTH = 2 * 1024 * 1024
+MAX_CONTENT_LENGTH = 10 * 1024 * 1024
 
 SOLUTION_UNREAD = "unread"
 SOLUTION_SOLVED = "solved"
