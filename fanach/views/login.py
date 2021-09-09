@@ -46,8 +46,7 @@ def login_form():
             if request.accept_mimetypes.accept_json:
                 return jsonify(
                         status="success",
-                        user_id=user.user_id,
-                        screenname=user.screenname
+                        message="",
                         )
 
     if request.accept_mimetypes.accept_html:
