@@ -25,7 +25,7 @@ class Word(db.Model):
         result_dict.pop("_sa_instance_state")
         for k in result_dict.keys():
             if type(result_dict[k]) is datetime:
-                result_dict[k] = result_dict[k].strftime("%Y-%m-%d %H:%M:%S:%f")
+                result_dict[k] = result_dict[k].strftime("%Y-%m-%dT%H:%M:%SZ")
         return result_dict
 
 class User(db.Model):
@@ -60,7 +60,7 @@ class User(db.Model):
         result_dict.pop("_sa_instance_state")
         for k in result_dict.keys():
             if type(result_dict[k]) is datetime:
-                result_dict[k] = result_dict[k].strftime("%Y-%m-%d %H:%M:%S:%f")
+                result_dict[k] = result_dict[k].strftime("%Y-%m-%dT%H:%M:%SZ")
         return result_dict
 
 
@@ -81,7 +81,7 @@ class Dictionary(db.Model):
         result_dict.pop("_sa_instance_state")
         for k in result_dict.keys():
             if type(result_dict[k]) is datetime:
-                result_dict[k] = result_dict[k].strftime("%Y-%m-%d %H:%M:%S:%f")
+                result_dict[k] = result_dict[k].strftime("%Y-%m-%dT%H:%M:%SZ")
         return result_dict
 
 
@@ -103,5 +103,5 @@ class Suggestion(db.Model):
         result_dict.pop("_sa_instance_state")
         for k in result_dict.keys():
             if type(result_dict[k]) is datetime:
-                result_dict[k] = result_dict[k].strftime("%Y-%m-%d %H:%M:%S:%f")
+                result_dict[k] = result_dict[k].strftime("%Y-%m-%dT%H:%M:%SZ")
         return result_dict
