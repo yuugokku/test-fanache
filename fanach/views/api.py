@@ -32,8 +32,10 @@ def make_api_response():
 # 辞書情報のdict型にownerの名前をくっつける
 def dic_join(dictionary):
     screenname = dictionary.owner.screenname
+    words = dictionary.words.all().__len__()
     joined = dictionary.toDict()
     joined["owner"] = screenname.__str__()
+    joined["words"] = words
     return joined
 
 
