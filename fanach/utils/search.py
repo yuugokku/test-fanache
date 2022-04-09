@@ -1,8 +1,6 @@
 # 検索条件のクラス
 import re
 
-from fanach.utils.syllables import into_syllables, scan
-
 def condition_default(o):
     if isinstance(o, Condition):
         return str(o)
@@ -26,9 +24,9 @@ class Condition():
         self.option = option
         self.revert = revert
 
-    def validate(self, target, rhyme=False):
-        if rhyme:
-            target = scan(target)
+    def validate(self, target, rhyme=None):
+        if rhyme is not None:
+            target = rhyme
         keyword = self.keyword
         if self.option == "starts":
             return xor(target.startswith(keyword), self.revert)

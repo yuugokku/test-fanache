@@ -1,6 +1,7 @@
 # dic.py : 辞書アプリのメインモジュール
 from urllib.parse import quote
 from datetime import datetime
+import requests, json
 
 from flask import request, redirect, url_for, render_template, flash, session, make_response
 from flask import Blueprint
@@ -88,6 +89,7 @@ def new_dic():
             dictionary = Dictionary(
                     dicname = dicname,
                     owner = owner,
+                    scansion_url = request.form["scansion_url"],
                     description = request.form["description"])
             db.session.add(dictionary)
             db.session.commit()
@@ -127,6 +129,7 @@ def edit_dic(dic_id):
         return render_template("dic/edit.html", dictionaries=[], dictionary=dictionary, dicname_msg="")
     elif request.method == "POST":
         dictionary.dicname = request.form["dicname"]
+        dictionary.scansion_url = request.form["scansion_url"]
         dictionary.description = request.form["description"]
         db.session.merge(dictionary)
         db.session.commit()
@@ -272,19 +275,32 @@ def search(dic_id):
     dictionary = Dictionary.query.get(dic_id)
     words = dictionary.words.all()
     words_to_show = []
-    MAX_CONDITIONS = app.config["MAX_CONDITIONS"]
-    print(MAX_CONDITIONS)
-    conditions = [
+
+    conditions = []
+    i = 0
+    while request.args.get("keyword_" + str(i), "").strip() != "":
+        conditions.append(
             Condition(
                 keyword = request.args["keyword_" + str(i)],
                 option = request.args["option_" + str(i)],
-                )
-            for i in range(MAX_CONDITIONS) if request.args.get("keyword_" + str(i), "").strip() != ""
-            ]
-    targets = [
-            request.args["target_" + str(i)]
-            for i in range(MAX_CONDITIONS) if request.args.get("keyword_" + str(i), "").strip() != ""
-            ]
+            )
+        )
+        i += 1
+    targets = []
+    i = 0
+    rhymes = None
+    while request.args.get("target_" + str(i), "").strip() != "":
+        t = request.args["target_" + str(i)]
+        # targetに"rhyme"を含むときのみ、韻律を問い合わせる
+        if t == "rhyme" and rhymes is None:
+            if dictionary.scansion_url != "" or dictionary.scansion_url is None:
+                rhymes_response = requests.post(dictionary.scansion_url, json={"texts": [w.word for w in words]})
+                rhymes = rhymes_response.json()
+            else:
+                flash("韻律解析URLが設定されていないため、韻律を用いた検索ができません。")
+                continue
+        targets.append(t)
+        i += 1
     if len(conditions) == 0:
         return redirect(url_for("dic.show_dic", dic_id=dic_id))
     for w in words:
@@ -293,7 +309,7 @@ def search(dic_id):
             if t == "wordtrans":
                 flags.append(c.validate(getattr(w, "word")) or c.validate(getattr(w, "trans")))
             elif t == "rhyme":
-                flags.append(c.validate(getattr(w, "word"), rhyme=True))
+                flags.append(c.validate(rhymes.get(getattr(w, "word"))))
             else:
                 flags.append(c.validate(getattr(w, t)))
         if sum(flags) == len(flags):

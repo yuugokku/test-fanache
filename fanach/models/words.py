@@ -68,13 +68,14 @@ class Dictionary(db.Model):
     __tablename__ = "dictionary"
 
     dic_id = db.Column(db.Integer, primary_key=True)
-    dicname = db.Column(db.String(50), nullable=False)
+    dicname = db.Column(db.String(100), nullable=False)
     words = db.relationship("Word", backref="dictionary", lazy="dynamic", cascade="all, delete")
     owner_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
     description = db.Column(db.Text)
     suggestions = db.relationship("Suggestion", backref="dictionary", lazy="dynamic", cascade="all, delete")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at =db.Column(db.DateTime, default=datetime.utcnow)
+    scansion_url = db.Column(db.String(200), default="")
     
     def toDict(self):
         result_dict = self.__dict__

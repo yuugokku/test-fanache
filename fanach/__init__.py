@@ -2,13 +2,14 @@
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 # アプリのオブジェクト
 app = Flask(__name__)
 app.config.from_object("fanach.config")
 
-# 辞書データベース
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # Blueprintの登録
 from fanach.views.dic import dic

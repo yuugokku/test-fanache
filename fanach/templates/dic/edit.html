@@ -11,6 +11,9 @@
 		{% if dicname_msg == "" %}
 		{% else %}<div class="alert alert-danger">{{ dicname_msg }}</div>{% endif %}
 		<br>
+		<label for="dicname">韻律解析URL</label>
+		<input type="text" id="InputScansionURL" name=scansion_url class="form-control" value="{{dictionary.scansion_url}}">
+        <br>
 		<label for="description">辞書の説明</label>
 		<textarea id="InputDescription" name=description class="form-control" rows="3">{{dictionary.description}}</textarea>
 		<br>
