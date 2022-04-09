@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title%}{{user.username}} - {% endblock %}
+
+{% block body %}
+<br><h3 class="text-center">{{user.screenname}}</h3><br>
+<div class="alert alert-info text-center">
+Email: {{user.email}}<br>
+Twitter: 
+{% if user.twitter_id == "" %}
+未登録
+{% else %}
+<a href="https://twitter.com/{{user.twitter_id}}">{{user.twitter_id}}</a>
+{% endif %}
+<br>
+{{user.profile | markdown | safe}}
+</div>
+<h4>作成した辞書</h4>
+{% for d in user.dictionaries %}
+<div class="border-primary rounded">
+    <h5><a class="text" href="{{ url_for('dic.show_dic', dic_id=d.dic_id) }}">{{d.dicname}}</a></h5>
+    <p>
+        最終更新: {{d.updated_at | timedelta }}<br>
+        {{d.description | markdown | safe}}
+    </p>
+</div>
+{% else %}
+まだ辞書を作成していません。
+{% endfor %}
+{% endblock %}

@@ -23,7 +23,7 @@
 {% for d in dictionaries %}
 <div class="border-primary rounded">
 <h5><a class="text-" href="{{ url_for('dic.show_dic', dic_id=d.dic_id) }}">{{d.dicname}}</a></h5>
-<p>作成者: {{d.owner.screenname}} 最終更新: {{d.updated_at | timedelta}}<br>
+<p>作成者: <a href="{{url_for('user.show_user_id', user_id=d.owner_id)}}">{{d.owner.screenname}}</a> 最終更新: {{d.updated_at | timedelta}}<br>
 {{d.description | markdown | safe}}</p>
 </div>
 {% else %}

@@ -14,9 +14,11 @@ db = SQLAlchemy(app)
 from fanach.views.dic import dic
 from fanach.views.login import login
 from fanach.views.api import api
+from fanach.views.user import user
 app.register_blueprint(dic, url_prefix="/dic")
 app.register_blueprint(login, url_prefix="/user")
 app.register_blueprint(api, url_prefix="/api")
+app.register_blueprint(user, url_prefix="/user")
 
 
 from fanach.models.words import *
