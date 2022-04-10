@@ -40,6 +40,7 @@ def login_form():
         else:
             session["logged_in"] = True
             session["current_user"] = user.user_id
+            session["username"] = user.username
             session["screenname"] = user.screenname
             if request.accept_mimetypes.accept_html:
                 return redirect(url_for("dic.show_all_dics"))
@@ -59,6 +60,7 @@ def login_form():
 def logout():
     session["logged_in"] = False
     session["current_user"] = None
+    session["username"] = ""
     session["screenname"] = ""
     return redirect(url_for("dic.show_all_dics"))
 
@@ -117,13 +119,13 @@ def register():
                     email = email,
                     twitter_id = "",
                     profile = "")
-            print("新しいユーザ:", username)
             db.session.add(user)
             db.session.commit()
             last_user = User.query.order_by(User.user_id.desc()).first()
             user_id = last_user.user_id
             session["logged_in"] = True
             session["current_user"] = user_id
+            session["username"] = ""
             session["screenname"] = user.screenname
             return redirect(url_for("dic.show_all_dics"))
         else:

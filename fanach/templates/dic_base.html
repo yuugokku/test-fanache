@@ -12,7 +12,7 @@
                             </li>
                         {% else %}
                             <li class="navbar-text mr-3">
-                                <span class="text-light">{{session["screenname"]}}</span>
+                                <a href="{{url_for('user.show_user', username=session['username'])}}"><span class="text-light">{{session["screenname"]}}</span></a>
                             </li>
                         {% endif %}
                         {% if dictionary is defined %}

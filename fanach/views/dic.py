@@ -12,27 +12,20 @@ from fanach.views.login import login_required, authenticate
 from fanach.models.words import Word, User, Dictionary, Suggestion
 from fanach.utils.converter import export_xml, parse, export_csv
 from fanach.utils.search import Condition
+import fanach.logics as fl
 
 
 dic = Blueprint("dic", __name__)
 
 @dic.route("/")
 def show_all_dics():
-    dictionaries = Dictionary.query.order_by(Dictionary.updated_at.desc()).limit(10).all()
-    if not session.get("logged_in", default=False):
-        my_dics = []
-    else:
-        user = User.query.get(session["current_user"])
-        if user is None:
-            my_dics = []
-        else:
-            my_dics = user.dictionaries.order_by(Dictionary.updated_at.desc()).all()
+    dictionaries, my_dics = fl.show_all_dics()
     return render_template("dic/all.html", dictionaries=dictionaries, my_dics=my_dics)
 
 # 辞書の情報を表示。辞書ページの外部リンクにはこのURLを用いる。
 @dic.route("/<int:dic_id>/info")
 def show_dic(dic_id):
-    dictionary = Dictionary.query.get(dic_id)
+    dictionary = fl.show_dic(dic_id)
     if dictionary is None:
         flash("辞書が存在しません。")
         return redirect(url_for("dic.show_all_dics"))
@@ -45,24 +38,11 @@ def _show_dic(dic_id):
 # キーワード検索
 @dic.route("/<int:dic_id>/word")
 def show_word(dic_id):
-    dictionary = Dictionary.query.get(dic_id)
-    keyword = request.args["keyword"]
-    target = request.args.get("target", default=None)
-    if target is None:
-        words = Word.query.filter(
-                Word.dic_id == dic_id, 
-                or_(Word.word.startswith(keyword), Word.trans.contains(keyword))
-                ).all()
-        target = "trans"
-    else:
-        if target == "word":
-            words = Word.query.filter(Word.dic_id == dic_id, Word.word.startswith(keyword)).all()
-        elif target == "trans":
-            words = Word.query.filter(Word.dic_id == dic_id, Word.word.contains(keyword)).all()
-    return render_template("dic/search.html", keyword=keyword, target=target, dictionary=dictionary, words=words)
+    return fl.show_word(dic_id)
 
 # 辞書を新規登録
 @dic.route("/new", methods=["GET", "POST"])
+@login_required
 def new_dic():
     dicname_msg = ""
     xmlfile_msg = ""
@@ -70,11 +50,7 @@ def new_dic():
         dictionaries = Dictionary.query.all()
         return render_template("dic/new.html", dictionaries=dictionaries, dicname_msg=dicname_msg, xmlfile_msg=xmlfile_msg)
     elif request.method == "POST":
-        is_valid = True
-        dicname = request.form["dicname"]
-        if (len(dicname) < 1) or (len(dicname) > 50):
-            dicname_msg = "辞書の名前は1文字から50文字である必要があります。"
-            is_valid = False
+        new_dic_id, is_valid, dicname_msg = fl.new_dic(request.form)
 
         xmlfile = None
         if "xmlfile" in request.files:
@@ -85,20 +61,13 @@ def new_dic():
 
         if is_valid:
             owner = User.query.get(session["current_user"])
-            # 辞書追加の処理
-            dictionary = Dictionary(
-                    dicname = dicname,
-                    owner = owner,
-                    scansion_url = request.form["scansion_url"],
-                    description = request.form["description"])
-            db.session.add(dictionary)
-            db.session.commit()
-            flash_msg = "辞書 %s を作成しました。" % dicname
+            dictionary = Dictionary.query.get(new_dic_id)
+            flash_msg = "辞書 %s を作成しました。" % request.form.get("dicname")
             # ファイルアップロード
             if xmlfile is not None:
                 xmltext = xmlfile.read()
                 # XML変換処理を挟む -> Wordテーブルに追加
-                if xmlfile.mimetype in ["text/xml", "text/csv"]:
+                if xmlfile.mimetype in ["text/xml"]:
                     records = parse(xmltext, xmlfile.mimetype)
                     word_count = 0
                     for word, trans, ex in records:
@@ -273,47 +242,7 @@ def new_word(dic_id):
 @dic.route("/<int:dic_id>/search", methods=["GET"])
 def search(dic_id):
     dictionary = Dictionary.query.get(dic_id)
-    words = dictionary.words.all()
-    words_to_show = []
-
-    conditions = []
-    i = 0
-    while request.args.get("keyword_" + str(i), "").strip() != "":
-        conditions.append(
-            Condition(
-                keyword = request.args["keyword_" + str(i)],
-                option = request.args["option_" + str(i)],
-            )
-        )
-        i += 1
-    targets = []
-    i = 0
-    rhymes = None
-    while request.args.get("target_" + str(i), "").strip() != "":
-        t = request.args["target_" + str(i)]
-        # targetに"rhyme"を含むときのみ、韻律を問い合わせる
-        if t == "rhyme" and rhymes is None:
-            if dictionary.scansion_url != "" or dictionary.scansion_url is None:
-                rhymes_response = requests.post(dictionary.scansion_url, json={"texts": [w.word for w in words]})
-                rhymes = rhymes_response.json()
-            else:
-                flash("韻律解析URLが設定されていないため、韻律を用いた検索ができません。")
-                continue
-        targets.append(t)
-        i += 1
-    if len(conditions) == 0:
-        return redirect(url_for("dic.show_dic", dic_id=dic_id))
-    for w in words:
-        flags = []
-        for c, t in zip(conditions, targets):
-            if t == "wordtrans":
-                flags.append(c.validate(getattr(w, "word")) or c.validate(getattr(w, "trans")))
-            elif t == "rhyme":
-                flags.append(c.validate(rhymes.get(getattr(w, "word"))))
-            else:
-                flags.append(c.validate(getattr(w, t)))
-        if sum(flags) == len(flags):
-            words_to_show.append(w)
+    _, _, words_to_show = fl.search(dic_id)
     return render_template("dic/search.html", dictionary=dictionary, dictionaries=[], words=words_to_show)
 
 @dic.route("/<int:dic_id>/export-<string:filetype>", methods=["GET"])

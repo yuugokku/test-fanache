@@ -11,6 +11,7 @@ from sqlalchemy import or_
 from fanach import app, db
 from fanach.models.words import Word, User, Dictionary, Suggestion
 from fanach.utils.search import Condition, condition_default
+import fanach.logics as fl
 
 import json
 
@@ -51,111 +52,36 @@ def word_join(word):
 # / 辞書一覧取得
 @api.route("/")
 def show_all_dics():
-    dictionaries = Dictionary.query.order_by(Dictionary.updated_at.desc()).all()
-    res = make_api_response()
-    result_dict = {}
-    result_dict["dictionaries"] = [dic_join(d) for d in dictionaries]
-    print(result_dict)
-    res.data = json.dumps(result_dict, ensure_ascii=False)
-    return res
+    dictionaries, _ = fl.show_all_dics()
+    return {"dictionaries": [dic_join(d) for d in dictionaries]}
 
 @api.route("/<int:dic_id>/info")
 def show_dic(dic_id):
-    dictionary = Dictionary.query.get(dic_id)
-    res = make_api_response()
+    dictionary = fl.show_dic(dic_id)
     if dictionary is None:
-        res.data = json.dumps({})
-        return res
-    res.data = json.dumps(dic_join(dictionary), ensure_ascii=False)
-    return res
+        return {"status": my_status(False)}
+    return dic_join(dictionary)
 
 
 @api.route("/<int:dic_id>/word")
 def show_word(dic_id):
-    keyword = request.args["keyword"]
-    target = request.args.get("target", default=None)
-    if target is None:
-        words = Word.query.filter(
-                Word.dic_id == dic_id, 
-                or_(Word.word.startswith(keyword), Word.trans.contains(keyword))
-                ).all()
-        target = "trans"
-    else:
-        if target == "word":
-            words = Word.query.filter(Word.dic_id == dic_id, Word.word.startswith(keyword)).all()
-        elif target == "trans":
-            words = Word.query.filter(Word.dic_id == dic_id, Word.trans.contains(keyword)).all()
-    res = make_api_response()
-    result_dict = {}
-    result_dict["keyword"] = keyword
-    result_dict["target"] = target
-    result_dict["words"] = [word_join(w) for w in words]
-    res.data = json.dumps(result_dict, ensure_ascii=False)
-    return res
+    keyword, target, _, words = fl.show_word(dic_id)
+    return {"keyword": keyword, "target": target, "words": [word_join(w) for w in words]}
 
 
 @api.route("/<dic_id>/search", methods=["GET"])
 def search(dic_id):
-    dictionary = Dictionary.query.get(dic_id)
-    words = dictionary.words.all()
-    MAX_CONDITIONS = app.config["MAX_CONDITIONS"]
-    conditions = [
-            Condition(
-                keyword = request.args["keyword_" + str(i)],
-                option = request.args["option_" + str(i)],
-                )
-            for i in range(MAX_CONDITIONS) if request.args.get("keyword_" + str(i), "").strip() != ""
-            ]
-    targets = [
-            request.args["target_" + str(i)]
-            for i in range(MAX_CONDITIONS) if request.args.get("keyword_" + str(i), "").strip() != ""
-            ]
-    res = make_api_response()
-    result_dict = {}
-    result_dict["conditions"] = [{"target": t, "keyword": c.keyword, "option": c.option} for t, c in zip(targets, conditions)]
-    if len(conditions) == 0:
-        result_dict["words"] = [word_join(w) for w in words]
-        res.data = json.dumps(result_dict)
-        return res
-    result_dict["words"] = []
-    for w in words:
-        flags = []
-        for c, t in zip(conditions, targets):
-            if t == "wordtrans":
-                flags.append(c.validate(getattr(w, "word")) or c.validate(getattr(w, "trans")))
-            elif t == "rhyme":
-                flags.append(c.validate(getattr(w, "word"), rhyme=True))
-            else:
-                flags.append(c.validate(getattr(w, t)))
-        if sum(flags) == len(flags):
-            result_dict["words"].append(word_join(w))
-    res.data = json.dumps(result_dict, default=condition_default, ensure_ascii=False)
-    return res
+    conditions, targets, words_to_show = fl.search(dic_id)
+    conditions = [{"target": t, "keyword": c.keyword, "option": c.option} for t, c in zip(targets, conditions)]
+    words = list(filter(word_join, words_to_show))
+    return {"conditions": conditions, "words": words}
 
 
 # 辞書を新規作成
 @api.route("/new", methods=["POST"])
 @login_required
 def new_dic():
-    message = ""
-    is_valid = True
-    new_dic_id = -1
-    
-    req = json.loads(request.json)
-    if (len(req["dicname"]) < 1) or (len(req["dicname"]) > 50):
-        message += "Length of dictionary name should be between 1 and 50 characters."
-        is_valid = False
-
-    if is_valid:
-        owner = User.query.get(session["current_user"])
-        dictionary = Dictionary(dicname=req["dicname"], owner=owner, description=req["description"])
-        db.session.add(dictionary)
-        db.session.commit()
-        new_dic_id = dictionary.dic_id
-        message += f"Dictionary {req['dicname']} has been created."
-    else:
-        message += "Failed to create a dictionary."
-    
+    new_dic_id, is_valid, message = fl.new_dic(request.get_json())
     return jsonify(dic_id=new_dic_id, status=my_status(is_valid), message=message)
 
 
